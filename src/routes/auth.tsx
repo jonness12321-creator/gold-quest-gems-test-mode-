@@ -7,7 +7,6 @@ import { BrandMark } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
@@ -98,19 +97,6 @@ function AuthPage() {
           </div>
           <Button type="submit" variant="jade" className="w-full" disabled={busy}>
             {mode === "signup" ? "Create account" : "Sign in"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={async () => {
-              const result = await lovable.auth.signInWithOAuth("google", {
-                redirect_uri: window.location.origin,
-              });
-              if (result.error) toast.error("Google sign-in failed.");
-            }}
-          >
-            Continue with Google
           </Button>
           <button
             type="button"
