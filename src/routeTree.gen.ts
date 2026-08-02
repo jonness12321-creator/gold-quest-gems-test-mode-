@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedOffersRouteImport } from './routes/_authenticated/offers'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -27,27 +28,40 @@ const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOffersRoute = AuthenticatedOffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/offers': typeof AuthenticatedOffersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/offers': typeof AuthenticatedOffersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_authenticated/offers': typeof AuthenticatedOffersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/home'
+  fullPaths: '/' | '/home' | '/offers'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/home'
-  id: '__root__' | '/' | '/_authenticated' | '/_authenticated/home'
+  to: '/' | '/home' | '/offers'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/_authenticated/home'
+    | '/_authenticated/offers'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -78,15 +92,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHomeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/offers': {
+      id: '/_authenticated/offers'
+      path: '/offers'
+      fullPath: '/offers'
+      preLoaderRoute: typeof AuthenticatedOffersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedOffersRoute: typeof AuthenticatedOffersRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedOffersRoute: AuthenticatedOffersRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
