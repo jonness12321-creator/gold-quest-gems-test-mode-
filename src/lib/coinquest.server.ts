@@ -33,14 +33,15 @@ export async function ensureProfileImpl(input: {
     .maybeSingle();
 
   if (existing.data) {
-    const patch: Record<string, unknown> = {};
-    if (input.name && !existing.data.name) patch["name"] = input.name;
-    if (input.deviceId && !existing.data.device_id) patch["device_id"] = input.deviceId;
+    const patch: { name?: string; device_id?: string } = {};
+    if (input.name && !existing.data.name) patch.name = input.name;
+    if (input.deviceId && !existing.data.device_id) patch.device_id = input.deviceId;
     if (Object.keys(patch).length) {
       await supabaseAdmin.from("profiles").update(patch).eq("id", input.userId);
     }
     return { ...existing.data, ...patch };
   }
+
 
   // one-account-per-device: flag rather than block, admins review
   let flagged = false;
