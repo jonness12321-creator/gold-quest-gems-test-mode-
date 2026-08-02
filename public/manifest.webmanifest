@@ -1,0 +1,10 @@
+{
+  "name": "CoinQuest",
+  "short_name": "CoinQuest",
+  "description": "Earn real wallet credit for rewarded ads, offers and daily tasks.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF8EC",
+  "theme_color": "#0F3D3E",
+  "icons": [{ "src": "/favicon.ico", "sizes": "48x48", "type": "image/x-icon" }]
+}
