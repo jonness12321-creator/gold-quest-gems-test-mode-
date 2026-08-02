@@ -21,10 +21,10 @@ async function notify(userId: string, title: string, body: string, kind = "info"
 export async function ensureProfileImpl(input: {
   userId: string;
   email: string | null;
-  name?: string;
-  phone?: string;
-  referralCode?: string;
-  deviceId?: string;
+  name?: string | undefined;
+  phone?: string | undefined;
+  referralCode?: string | undefined;
+  deviceId?: string | undefined;
 }) {
   const existing = await supabaseAdmin
     .from("profiles")
@@ -356,9 +356,14 @@ export async function submitKycImpl(userId: string, fullName: string, idNumber: 
   return { ok: true };
 }
 
-export async function assertAdmin(supabase: {
-  rpc: (fn: "has_role", args: { _user_id: string; _role: "admin" }) => Promise<{ data: unknown }>;
-}, userId: string) {
+type RoleRpcClient = {
+  rpc: (
+    fn: "has_role",
+    args: { _user_id: string; _role: "admin" },
+  ) => PromiseLike<{ data: unknown }>;
+};
+
+export async function assertAdmin(supabase: RoleRpcClient, userId: string) {
   const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
   if (data !== true) throw new Error("Forbidden");
 }
