@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedOffersRouteImport } from './routes/_authenticated/offers'
+import { Route as AuthenticatedTaskRouteImport } from './routes/_authenticated/task'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -33,16 +34,23 @@ const AuthenticatedOffersRoute = AuthenticatedOffersRouteImport.update({
   path: '/offers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTaskRoute = AuthenticatedTaskRouteImport.update({
+  id: '/task',
+  path: '/task',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/home': typeof AuthenticatedHomeRoute
   '/offers': typeof AuthenticatedOffersRoute
+  '/task': typeof AuthenticatedTaskRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/home': typeof AuthenticatedHomeRoute
   '/offers': typeof AuthenticatedOffersRoute
+  '/task': typeof AuthenticatedTaskRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,18 +58,20 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/offers': typeof AuthenticatedOffersRoute
+  '/_authenticated/task': typeof AuthenticatedTaskRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/home' | '/offers'
+  fullPaths: '/' | '/home' | '/offers' | '/task'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/home' | '/offers'
+  to: '/' | '/home' | '/offers' | '/task'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_authenticated/home'
     | '/_authenticated/offers'
+    | '/_authenticated/task'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -99,17 +109,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOffersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/task': {
+      id: '/_authenticated/task'
+      path: '/task'
+      fullPath: '/task'
+      preLoaderRoute: typeof AuthenticatedTaskRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedOffersRoute: typeof AuthenticatedOffersRoute
+  AuthenticatedTaskRoute: typeof AuthenticatedTaskRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedOffersRoute: AuthenticatedOffersRoute,
+  AuthenticatedTaskRoute: AuthenticatedTaskRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
