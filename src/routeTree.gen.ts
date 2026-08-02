@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedOffersRouteImport } from './routes/_authenticated/offers'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedReferRouteImport } from './routes/_authenticated/refer'
 import { Route as AuthenticatedTaskRouteImport } from './routes/_authenticated/task'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 
@@ -41,6 +42,11 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReferRoute = AuthenticatedReferRouteImport.update({
+  id: '/refer',
+  path: '/refer',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTaskRoute = AuthenticatedTaskRouteImport.update({
   id: '/task',
   path: '/task',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/offers': typeof AuthenticatedOffersRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/refer': typeof AuthenticatedReferRoute
   '/task': typeof AuthenticatedTaskRoute
   '/wallet': typeof AuthenticatedWalletRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/offers': typeof AuthenticatedOffersRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/refer': typeof AuthenticatedReferRoute
   '/task': typeof AuthenticatedTaskRoute
   '/wallet': typeof AuthenticatedWalletRoute
 }
@@ -75,14 +83,16 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/offers': typeof AuthenticatedOffersRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/refer': typeof AuthenticatedReferRoute
   '/_authenticated/task': typeof AuthenticatedTaskRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/home' | '/offers' | '/profile' | '/task' | '/wallet'
+  fullPaths:
+    '/' | '/home' | '/offers' | '/profile' | '/refer' | '/task' | '/wallet'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/home' | '/offers' | '/profile' | '/task' | '/wallet'
+  to: '/' | '/home' | '/offers' | '/profile' | '/refer' | '/task' | '/wallet'
   id:
     | '__root__'
     | '/'
@@ -90,6 +100,7 @@ export interface FileRouteTypes {
     | '/_authenticated/home'
     | '/_authenticated/offers'
     | '/_authenticated/profile'
+    | '/_authenticated/refer'
     | '/_authenticated/task'
     | '/_authenticated/wallet'
   fileRoutesById: FileRoutesById
@@ -136,6 +147,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/refer': {
+      id: '/_authenticated/refer'
+      path: '/refer'
+      fullPath: '/refer'
+      preLoaderRoute: typeof AuthenticatedReferRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/task': {
       id: '/_authenticated/task'
       path: '/task'
@@ -157,6 +175,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedOffersRoute: typeof AuthenticatedOffersRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedReferRoute: typeof AuthenticatedReferRoute
   AuthenticatedTaskRoute: typeof AuthenticatedTaskRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
 }
@@ -165,6 +184,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedOffersRoute: AuthenticatedOffersRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedReferRoute: AuthenticatedReferRoute,
   AuthenticatedTaskRoute: AuthenticatedTaskRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
 }
