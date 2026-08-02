@@ -48,6 +48,7 @@ export const Route = createFileRoute("/_authenticated/wallet")({
 const methodSchema = z.object({
   type: z.enum(["upi", "paypal", "bank"]),
   label: z.string().trim().min(2, "Add a short label").max(60),
+  holderName: z.string().trim().min(2, "Enter the account holder name").max(80),
   details: z.string().trim().min(4, "Enter valid payout details").max(200),
 });
 
@@ -60,8 +61,8 @@ function WalletPage() {
   const [methodId, setMethodId] = useState<string>("");
   const [methodOpen, setMethodOpen] = useState(false);
 
-  const balance = Number(profile?.balance ?? 0);
-  const pending = Number(profile?.pending_balance ?? 0);
+  const balance = Number(profile?.wallet_balance ?? 0);
+  const pending = Number(profile?.held_balance ?? 0);
   const lifetime = Number(profile?.lifetime_earned ?? 0);
 
   const transactions = useQuery({
@@ -102,9 +103,11 @@ function WalletPage() {
     mutationFn: async (values: z.infer<typeof methodSchema>) => {
       const { error } = await supabase.from("payout_methods").insert({
         user_id: session!.user.id,
-        type: values.type,
+        method_type: values.type,
         label: values.label,
-        details: values.details,
+        holder_name: values.holderName,
+        upi_id: values.type === "upi" ? values.details : null,
+        account_number: values.type === "upi" ? null : values.details,
       });
       if (error) throw error;
     },
@@ -191,6 +194,7 @@ function WalletPage() {
                   const parsed = methodSchema.safeParse({
                     type: String(form.get("type")),
                     label: String(form.get("label")),
+                    holderName: String(form.get("holderName")),
                     details: String(form.get("details")),
                   });
                   if (!parsed.success) {
@@ -217,7 +221,11 @@ function WalletPage() {
                   <Input id="label" name="label" maxLength={60} placeholder="My UPI" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="details">Details</Label>
+                  <Label htmlFor="holderName">Account holder</Label>
+                  <Input id="holderName" name="holderName" maxLength={80} placeholder="Full name" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="details">UPI ID / account number</Label>
                   <Input id="details" name="details" maxLength={200} placeholder="name@bank" />
                 </div>
                 <DialogFooter>
@@ -253,7 +261,7 @@ function WalletPage() {
             <SelectContent>
               {(methods.data ?? []).map((method) => (
                 <SelectItem key={method.id} value={method.id}>
-                  {method.label} · {method.type.toUpperCase()}
+                  {method.label} · {method.method_type.toUpperCase()}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -313,7 +321,7 @@ function WalletPage() {
           {transactions.data.map((tx) => (
             <li key={tx.id} className="surface-card flex items-center justify-between p-3">
               <div className="min-w-0">
-                <p className="truncate font-semibold">{tx.description ?? tx.type}</p>
+                <p className="truncate font-semibold">{tx.description || tx.kind}</p>
                 <p className="text-xs text-muted-foreground">{formatDateTime(tx.created_at)}</p>
               </div>
               <span
