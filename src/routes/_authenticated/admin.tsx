@@ -65,7 +65,6 @@ function AdminPage() {
     );
   }
 
-  const stats = data.data?.stats;
 
   return (
     <AppShell subtitle="Admin">
@@ -73,12 +72,12 @@ function AdminPage() {
 
       <div className="mt-3 grid grid-cols-2 gap-3">
         <div className="surface-card p-3">
-          <p className="text-xs text-muted-foreground">Users</p>
-          <p className="text-amount text-lg">{stats?.users ?? 0}</p>
+          <p className="text-xs text-muted-foreground">Pending payouts</p>
+          <p className="text-amount text-lg">{data.data?.withdrawals?.length ?? 0}</p>
         </div>
         <div className="surface-card p-3">
-          <p className="text-xs text-muted-foreground">Paid out</p>
-          <p className="text-amount text-lg">{formatMoney(stats?.paidOut ?? 0)}</p>
+          <p className="text-xs text-muted-foreground">Pending value</p>
+          <p className="text-amount text-lg">{formatMoney((data.data?.withdrawals ?? []).reduce((sum, w) => sum + Number(w.amount), 0))}</p>
         </div>
       </div>
 
