@@ -1,10 +1,11 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
-  KYC_THRESHOLD,
   MAX_ADS_PER_HOUR,
   MIN_SECONDS_PER_AD,
   MIN_WITHDRAWAL,
   QUESTS,
+  STREAK_BONUS,
+  STREAK_GOAL,
 } from "./coinquest";
 
 function code(): string {
@@ -33,19 +34,20 @@ export async function ensureProfileImpl(input: {
     .maybeSingle();
 
   if (existing.data) {
-    const patch: { name?: string; device_id?: string } = {};
+    const patch: { name?: string; phone?: string; device_id?: string; email?: string } = {};
     if (input.name && !existing.data.name) patch.name = input.name;
+    if (input.phone && !existing.data.phone) patch.phone = input.phone;
     if (input.deviceId && !existing.data.device_id) patch.device_id = input.deviceId;
+    if (input.email && !existing.data.email) patch.email = input.email;
     if (Object.keys(patch).length) {
       await supabaseAdmin.from("profiles").update(patch).eq("id", input.userId);
     }
     return { ...existing.data, ...patch };
   }
 
-
   // one-account-per-device: flag rather than block, admins review
   let flagged = false;
-  if (input.deviceId) {
+  if (input.deviceId && input.deviceId !== "server") {
     const dupes = await supabaseAdmin
       .from("profiles")
       .select("id")
@@ -114,13 +116,81 @@ export async function ensureProfileImpl(input: {
   return inserted.data;
 }
 
-async function creditWallet(userId: string, amount: number, source: string, description: string) {
+export async function completeOnboardingImpl(
+  userId: string,
+  values: { name: string; phone?: string | undefined; deviceId?: string | undefined },
+) {
+  const patch: { name: string; onboarded: boolean; phone?: string; device_id?: string } = {
+    name: values.name,
+    onboarded: true,
+  };
+  if (values.phone) patch.phone = values.phone;
+  if (values.deviceId) patch.device_id = values.deviceId;
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .update(patch)
+    .eq("id", userId)
+    .select("*")
+    .single();
+  if (error) throw new Error("Could not save your details.");
+  return data;
+}
+
+async function payReferralBonus(userId: string) {
+  const referral = await supabaseAdmin
+    .from("referrals")
+    .select("*")
+    .eq("referred_id", userId)
+    .eq("status", "pending")
+    .maybeSingle();
+  if (!referral.data) return;
+
+  const bonus = Number(referral.data.bonus_amount);
+  const referrer = await supabaseAdmin
+    .from("profiles")
+    .select("wallet_balance, lifetime_earned")
+    .eq("id", referral.data.referrer_id)
+    .single();
+  if (referrer.error) return;
+
+  await supabaseAdmin
+    .from("profiles")
+    .update({
+      wallet_balance: Number(referrer.data.wallet_balance) + bonus,
+      lifetime_earned: Number(referrer.data.lifetime_earned) + bonus,
+    })
+    .eq("id", referral.data.referrer_id);
+  await supabaseAdmin.from("wallet_transactions").insert({
+    user_id: referral.data.referrer_id,
+    source: "referral",
+    description: "Referral bonus",
+    amount: bonus,
+    kind: "bonus",
+    status: "completed",
+  });
+  await supabaseAdmin.from("referrals").update({ status: "credited" }).eq("id", referral.data.id);
+  await notify(
+    referral.data.referrer_id,
+    "Referral bonus earned",
+    `Your friend started earning — $${bonus.toFixed(2)} added.`,
+    "referral",
+  );
+}
+
+async function creditWallet(
+  userId: string,
+  amount: number,
+  source: string,
+  description: string,
+  kind = "earned",
+) {
   const profile = await supabaseAdmin
     .from("profiles")
     .select("wallet_balance, lifetime_earned")
     .eq("id", userId)
     .single();
   if (profile.error) throw new Error("Wallet unavailable.");
+  const firstEarning = Number(profile.data.lifetime_earned) === 0;
   await supabaseAdmin
     .from("profiles")
     .update({
@@ -133,9 +203,44 @@ async function creditWallet(userId: string, amount: number, source: string, desc
     source,
     description,
     amount,
-    kind: "earned",
+    kind,
     status: "completed",
   });
+  if (firstEarning) await payReferralBonus(userId);
+}
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Bumps the daily streak; credits a bonus every STREAK_GOAL consecutive days. */
+export async function touchStreakImpl(userId: string) {
+  const profile = await supabaseAdmin
+    .from("profiles")
+    .select("streak_count, streak_date")
+    .eq("id", userId)
+    .maybeSingle();
+  if (!profile.data) return { streak: 0, credited: false };
+
+  const day = today();
+  if (profile.data.streak_date === day) {
+    return { streak: profile.data.streak_count, credited: false };
+  }
+
+  const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+  const streak = profile.data.streak_date === yesterday ? profile.data.streak_count + 1 : 1;
+
+  await supabaseAdmin
+    .from("profiles")
+    .update({ streak_count: streak, streak_date: day })
+    .eq("id", userId);
+
+  if (streak > 0 && streak % STREAK_GOAL === 0) {
+    await creditWallet(userId, STREAK_BONUS, "streak", `${STREAK_GOAL}-day streak bonus`, "bonus");
+    await notify(userId, "Streak bonus", `You earned $${STREAK_BONUS.toFixed(2)} for your streak.`, "bonus");
+    return { streak, credited: true };
+  }
+  return { streak, credited: false };
 }
 
 export async function startQuestImpl(userId: string, questKey: string) {
@@ -208,6 +313,8 @@ export async function reportAdImpl(userId: string, sessionId: string) {
     .single();
   if (updated.error) throw new Error("Could not record that ad.");
 
+  await touchStreakImpl(userId);
+
   if (done) {
     const reward = Number(session.data.reward_amount);
     await creditWallet(
@@ -252,12 +359,42 @@ export async function completeTaskImpl(userId: string, taskId: string) {
     { onConflict: "user_id,task_id" },
   );
 
+  await touchStreakImpl(userId);
+
   if (completed) {
     const reward = Number(task.data.reward);
     await creditWallet(userId, reward, "task", task.data.title);
     await notify(userId, "Task completed", `${task.data.title} — $${reward.toFixed(2)} added.`, "task");
   }
   return { progress, completed };
+}
+
+export async function claimOfferImpl(userId: string, offerId: string) {
+  const offer = await supabaseAdmin.from("offers").select("*").eq("id", offerId).single();
+  if (offer.error || !offer.data.is_active) throw new Error("Offer unavailable.");
+
+  const existing = await supabaseAdmin
+    .from("offer_claims")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("offer_id", offerId)
+    .maybeSingle();
+  if (existing.data) throw new Error("You already submitted this offer for review.");
+
+  const created = await supabaseAdmin
+    .from("offer_claims")
+    .insert({ user_id: userId, offer_id: offerId, reward_amount: offer.data.reward_amount })
+    .select("*")
+    .single();
+  if (created.error) throw new Error("Could not submit that offer.");
+
+  await notify(
+    userId,
+    "Offer submitted",
+    `${offer.data.title} is pending review. We'll credit it once approved.`,
+    "offer",
+  );
+  return created.data;
 }
 
 export async function createWithdrawalImpl(
@@ -270,16 +407,13 @@ export async function createWithdrawalImpl(
   }
   const profile = await supabaseAdmin
     .from("profiles")
-    .select("wallet_balance, held_balance, kyc_status")
+    .select("wallet_balance, held_balance, is_flagged")
     .eq("id", userId)
     .single();
   if (profile.error) throw new Error("Wallet unavailable.");
 
   const available = Number(profile.data.wallet_balance) - Number(profile.data.held_balance);
   if (amount > available) throw new Error("That's more than your available balance.");
-  if (amount >= KYC_THRESHOLD && profile.data.kyc_status !== "verified") {
-    throw new Error("Identity verification is required for this amount.");
-  }
 
   const method = await supabaseAdmin
     .from("payout_methods")
@@ -288,6 +422,14 @@ export async function createWithdrawalImpl(
     .eq("user_id", userId)
     .maybeSingle();
   if (!method.data) throw new Error("Choose a valid payout method.");
+
+  const openRequest = await supabaseAdmin
+    .from("withdrawal_requests")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("status", "pending")
+    .maybeSingle();
+  if (openRequest.data) throw new Error("You already have a withdrawal awaiting review.");
 
   const created = await supabaseAdmin
     .from("withdrawal_requests")
@@ -343,19 +485,6 @@ export async function cancelWithdrawalImpl(userId: string, id: string) {
   return { ok: true };
 }
 
-export async function submitKycImpl(userId: string, fullName: string, idNumber: string) {
-  if (fullName.trim().length < 3 || idNumber.trim().length < 4) {
-    throw new Error("Please enter your full name and a valid ID number.");
-  }
-  await supabaseAdmin.from("kyc_submissions").insert({
-    user_id: userId,
-    full_name: fullName.trim(),
-    id_number: idNumber.trim(),
-  });
-  await supabaseAdmin.from("profiles").update({ kyc_status: "pending" }).eq("id", userId);
-  return { ok: true };
-}
-
 type RoleRpcClient = {
   rpc: (
     fn: "has_role",
@@ -371,6 +500,9 @@ export async function assertAdmin(supabase: RoleRpcClient, userId: string) {
 export async function adminUpdateWithdrawalImpl(id: string, status: string, note: string | null) {
   const req = await supabaseAdmin.from("withdrawal_requests").select("*").eq("id", id).single();
   if (req.error) throw new Error("Request not found.");
+  if (req.data.status !== "pending" && req.data.status !== "approved") {
+    throw new Error("This request has already been settled.");
+  }
   await supabaseAdmin
     .from("withdrawal_requests")
     .update({ status, admin_note: note })
@@ -383,7 +515,7 @@ export async function adminUpdateWithdrawalImpl(id: string, status: string, note
     .single();
   const amount = Number(req.data.amount);
 
-  if (status === "paid") {
+  if (status === "approved") {
     await supabaseAdmin
       .from("profiles")
       .update({
@@ -396,7 +528,12 @@ export async function adminUpdateWithdrawalImpl(id: string, status: string, note
       .from("wallet_transactions")
       .update({ status: "completed", description: "Withdrawal paid" })
       .eq("reference_id", id);
-    await notify(req.data.user_id, "Withdrawal approved", `$${amount.toFixed(2)} has been paid out.`, "wallet");
+    await notify(
+      req.data.user_id,
+      "Withdrawal approved",
+      note ?? `$${amount.toFixed(2)} has been sent to your payout method.`,
+      "wallet",
+    );
   } else if (status === "rejected") {
     await supabaseAdmin
       .from("profiles")
@@ -406,55 +543,138 @@ export async function adminUpdateWithdrawalImpl(id: string, status: string, note
       .from("wallet_transactions")
       .update({ status: "failed", description: "Withdrawal rejected" })
       .eq("reference_id", id);
-    await notify(req.data.user_id, "Withdrawal rejected", note ?? "Please contact support.", "wallet");
+    await notify(
+      req.data.user_id,
+      "Withdrawal rejected",
+      note ?? "Please contact support for details.",
+      "wallet",
+    );
   }
   return { ok: true };
 }
 
-export async function adminUpdateKycImpl(id: string, status: string, note: string | null) {
-  const row = await supabaseAdmin.from("kyc_submissions").select("*").eq("id", id).single();
-  if (row.error) throw new Error("Submission not found.");
-  await supabaseAdmin.from("kyc_submissions").update({ status, admin_note: note }).eq("id", id);
+export async function adminUpdateOfferClaimImpl(id: string, status: string, note: string | null) {
+  const claim = await supabaseAdmin.from("offer_claims").select("*").eq("id", id).single();
+  if (claim.error) throw new Error("Claim not found.");
+  if (claim.data.status !== "pending") throw new Error("This claim was already reviewed.");
+
+  await supabaseAdmin.from("offer_claims").update({ status, admin_note: note }).eq("id", id);
+
+  if (status === "approved") {
+    const reward = Number(claim.data.reward_amount);
+    await creditWallet(claim.data.user_id, reward, "offer", "Offer reward");
+    await notify(
+      claim.data.user_id,
+      "Offer approved",
+      `$${reward.toFixed(2)} was added to your wallet.`,
+      "offer",
+    );
+  } else {
+    await notify(
+      claim.data.user_id,
+      "Offer rejected",
+      note ?? "That offer couldn't be verified.",
+      "offer",
+    );
+  }
+  return { ok: true };
+}
+
+export async function adminRespondTicketImpl(id: string, response: string, status: string) {
+  const ticket = await supabaseAdmin.from("support_tickets").select("*").eq("id", id).single();
+  if (ticket.error) throw new Error("Ticket not found.");
+  await supabaseAdmin
+    .from("support_tickets")
+    .update({ admin_response: response, status })
+    .eq("id", id);
+  await notify(ticket.data.user_id, "Support replied", response, "support");
+  return { ok: true };
+}
+
+export async function adminSetFlagImpl(userId: string, flagged: boolean) {
+  await supabaseAdmin.from("profiles").update({ is_flagged: flagged }).eq("id", userId);
+  return { ok: true };
+}
+
+export async function adminAdjustWalletImpl(userId: string, amount: number, reason: string) {
+  const profile = await supabaseAdmin
+    .from("profiles")
+    .select("wallet_balance, lifetime_earned")
+    .eq("id", userId)
+    .single();
+  if (profile.error) throw new Error("User not found.");
+  const next = Number(profile.data.wallet_balance) + amount;
+  if (next < 0) throw new Error("That adjustment would make the balance negative.");
   await supabaseAdmin
     .from("profiles")
-    .update({ kyc_status: status === "approved" ? "verified" : status })
-    .eq("id", row.data.user_id);
-  await notify(
-    row.data.user_id,
-    status === "approved" ? "Identity verified" : "Identity check rejected",
-    note ?? "",
-    "kyc",
-  );
+    .update({
+      wallet_balance: next,
+      lifetime_earned:
+        amount > 0 ? Number(profile.data.lifetime_earned) + amount : profile.data.lifetime_earned,
+    })
+    .eq("id", userId);
+  await supabaseAdmin.from("wallet_transactions").insert({
+    user_id: userId,
+    source: "adjustment",
+    description: reason,
+    amount,
+    kind: amount >= 0 ? "bonus" : "adjustment",
+    status: "completed",
+  });
+  await notify(userId, "Wallet adjusted", `${reason} (${amount >= 0 ? "+" : "−"}$${Math.abs(amount).toFixed(2)})`, "wallet");
   return { ok: true };
 }
 
 export async function adminOverviewImpl() {
-  const [withdrawals, kyc, tickets, flagged] = await Promise.all([
+  const [withdrawals, claims, tickets, users, transactions] = await Promise.all([
     supabaseAdmin
       .from("withdrawal_requests")
-      .select("*, profiles:user_id(name, email)")
-      .order("created_at", { ascending: false })
-      .limit(100),
-    supabaseAdmin
-      .from("kyc_submissions")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(100),
+      .limit(200),
+    supabaseAdmin
+      .from("offer_claims")
+      .select("*, offers:offer_id(title)")
+      .order("created_at", { ascending: false })
+      .limit(200),
     supabaseAdmin
       .from("support_tickets")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(100),
+      .limit(200),
     supabaseAdmin
       .from("profiles")
-      .select("id, name, email, device_id, is_flagged, created_at")
-      .eq("is_flagged", true)
-      .limit(100),
+      .select(
+        "id, name, email, phone, device_id, is_flagged, wallet_balance, held_balance, lifetime_earned, lifetime_withdrawn, referral_code, created_at",
+      )
+      .order("created_at", { ascending: false })
+      .limit(200),
+    supabaseAdmin
+      .from("wallet_transactions")
+      .select("amount, kind")
+      .limit(2000),
   ]);
+
+  const profiles = users.data ?? [];
+  const byId = new Map(profiles.map((p) => [p.id, p]));
+
+  const totals = {
+    users: profiles.length,
+    flagged: profiles.filter((p) => p.is_flagged).length,
+    earned: profiles.reduce((sum, p) => sum + Number(p.lifetime_earned), 0),
+    withdrawn: profiles.reduce((sum, p) => sum + Number(p.lifetime_withdrawn), 0),
+    liability: profiles.reduce((sum, p) => sum + Number(p.wallet_balance), 0),
+    transactions: (transactions.data ?? []).length,
+  };
+
   return {
-    withdrawals: withdrawals.data ?? [],
-    kyc: kyc.data ?? [],
-    tickets: tickets.data ?? [],
-    flagged: flagged.data ?? [],
+    withdrawals: (withdrawals.data ?? []).map((w) => ({
+      ...w,
+      user: byId.get(w.user_id) ?? null,
+    })),
+    claims: (claims.data ?? []).map((c) => ({ ...c, user: byId.get(c.user_id) ?? null })),
+    tickets: (tickets.data ?? []).map((t) => ({ ...t, user: byId.get(t.user_id) ?? null })),
+    users: profiles,
+    totals,
   };
 }
