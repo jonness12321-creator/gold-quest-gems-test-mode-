@@ -7,11 +7,13 @@ export const QUESTS = [
 export type QuestKey = (typeof QUESTS)[number]["key"];
 
 export const MIN_WITHDRAWAL = 5;
-export const KYC_THRESHOLD = 20;
 /** Minimum seconds a single rewarded video must run before the server accepts it. */
 export const MIN_SECONDS_PER_AD = 5;
 /** Fraud guard: max ads credited per user per rolling hour. */
 export const MAX_ADS_PER_HOUR = 80;
+/** Consecutive active days needed for a streak bonus. */
+export const STREAK_GOAL = 7;
+export const STREAK_BONUS = 1;
 
 export function formatMoney(value: number | string | null | undefined): string {
   const n = typeof value === "string" ? Number(value) : (value ?? 0);

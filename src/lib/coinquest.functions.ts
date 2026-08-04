@@ -23,6 +23,22 @@ export const ensureProfile = createServerFn({ method: "POST" })
     });
   });
 
+export const completeOnboarding = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        name: z.string().trim().min(2).max(80),
+        phone: z.string().trim().max(30).optional(),
+        deviceId: z.string().trim().max(64).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { completeOnboardingImpl } = await import("./coinquest.server");
+    return completeOnboardingImpl(context.userId, data);
+  });
+
 export const startQuest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ questKey: z.string().max(40) }).parse(input))
@@ -47,6 +63,14 @@ export const completeTask = createServerFn({ method: "POST" })
     return completeTaskImpl(context.userId, data.taskId);
   });
 
+export const claimOffer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ offerId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { claimOfferImpl } = await import("./coinquest.server");
+    return claimOfferImpl(context.userId, data.offerId);
+  });
+
 export const createWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -67,18 +91,6 @@ export const cancelWithdrawal = createServerFn({ method: "POST" })
     return cancelWithdrawalImpl(context.userId, data.id);
   });
 
-export const submitKyc = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({ fullName: z.string().trim().min(3).max(120), idNumber: z.string().trim().min(4).max(40) })
-      .parse(input),
-  )
-  .handler(async ({ data, context }) => {
-    const { submitKycImpl } = await import("./coinquest.server");
-    return submitKycImpl(context.userId, data.fullName, data.idNumber);
-  });
-
 export const adminOverview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -93,7 +105,7 @@ export const adminUpdateWithdrawal = createServerFn({ method: "POST" })
     z
       .object({
         id: z.string().uuid(),
-        status: z.enum(["approved", "rejected", "paid"]),
+        status: z.enum(["approved", "rejected"]),
         note: z.string().trim().max(300).nullable().optional(),
       })
       .parse(input),
@@ -104,7 +116,7 @@ export const adminUpdateWithdrawal = createServerFn({ method: "POST" })
     return adminUpdateWithdrawalImpl(data.id, data.status, data.note ?? null);
   });
 
-export const adminUpdateKyc = createServerFn({ method: "POST" })
+export const adminUpdateOfferClaim = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
@@ -116,7 +128,52 @@ export const adminUpdateKyc = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { assertAdmin, adminUpdateKycImpl } = await import("./coinquest.server");
+    const { assertAdmin, adminUpdateOfferClaimImpl } = await import("./coinquest.server");
     await assertAdmin(context.supabase, context.userId);
-    return adminUpdateKycImpl(data.id, data.status, data.note ?? null);
+    return adminUpdateOfferClaimImpl(data.id, data.status, data.note ?? null);
+  });
+
+export const adminRespondTicket = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        response: z.string().trim().min(2).max(1000),
+        status: z.enum(["open", "resolved"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertAdmin, adminRespondTicketImpl } = await import("./coinquest.server");
+    await assertAdmin(context.supabase, context.userId);
+    return adminRespondTicketImpl(data.id, data.response, data.status);
+  });
+
+export const adminSetFlag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ userId: z.string().uuid(), flagged: z.boolean() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertAdmin, adminSetFlagImpl } = await import("./coinquest.server");
+    await assertAdmin(context.supabase, context.userId);
+    return adminSetFlagImpl(data.userId, data.flagged);
+  });
+
+export const adminAdjustWallet = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        userId: z.string().uuid(),
+        amount: z.number().min(-10000).max(10000),
+        reason: z.string().trim().min(2).max(200),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertAdmin, adminAdjustWalletImpl } = await import("./coinquest.server");
+    await assertAdmin(context.supabase, context.userId);
+    return adminAdjustWalletImpl(data.userId, data.amount, data.reason);
   });
