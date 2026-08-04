@@ -120,9 +120,12 @@ export async function completeOnboardingImpl(
   userId: string,
   values: { name: string; phone?: string | undefined; deviceId?: string | undefined },
 ) {
-  const patch: Record<string, unknown> = { name: values.name, onboarded: true };
-  if (values.phone) patch["phone"] = values.phone;
-  if (values.deviceId) patch["device_id"] = values.deviceId;
+  const patch: { name: string; onboarded: boolean; phone?: string; device_id?: string } = {
+    name: values.name,
+    onboarded: true,
+  };
+  if (values.phone) patch.phone = values.phone;
+  if (values.deviceId) patch.device_id = values.deviceId;
   const { data, error } = await supabaseAdmin
     .from("profiles")
     .update(patch)

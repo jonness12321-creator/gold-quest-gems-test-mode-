@@ -1,33 +1,52 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
-import { SectionTitle } from "@/components/States";
+import { EmptyState, SectionTitle } from "@/components/States";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { formatDateTime, formatMoney } from "@/lib/coinquest";
-import { adminOverview, adminUpdateKyc, adminUpdateWithdrawal } from "@/lib/coinquest.functions";
+import {
+  adminAdjustWallet,
+  adminOverview,
+  adminRespondTicket,
+  adminSetFlag,
+  adminUpdateOfferClaim,
+  adminUpdateWithdrawal,
+} from "@/lib/coinquest.functions";
+import { LifeBuoy } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
       { title: "Admin — CoinQuest" },
-      { name: "description", content: "Review withdrawals, verifications and platform metrics." },
+      { name: "description", content: "Review withdrawals, offer claims, tickets and users." },
       { property: "og:title", content: "Admin — CoinQuest" },
-      { property: "og:description", content: "Review withdrawals, verifications and platform metrics." },
+      { property: "og:description", content: "Review withdrawals, offer claims, tickets and users." },
     ],
   }),
   component: AdminPage,
 });
+
+type TabKey = "withdrawals" | "claims" | "tickets" | "users";
 
 function AdminPage() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const overview = useServerFn(adminOverview);
   const updateWithdrawal = useServerFn(adminUpdateWithdrawal);
-  const updateKyc = useServerFn(adminUpdateKyc);
+  const updateClaim = useServerFn(adminUpdateOfferClaim);
+  const respondTicket = useServerFn(adminRespondTicket);
+  const setFlag = useServerFn(adminSetFlag);
+  const adjustWallet = useServerFn(adminAdjustWallet);
+
+  const [tab, setTab] = useState<TabKey>("withdrawals");
+  const [notes, setNotes] = useState<Record<string, string>>({});
 
   const data = useQuery({
     queryKey: ["admin-overview"],
@@ -35,24 +54,56 @@ function AdminPage() {
     queryFn: () => overview({}),
   });
 
+  const refresh = () => void queryClient.invalidateQueries();
+  const onError = (error: Error) => toast.error(error.message);
+
   const withdrawalAction = useMutation({
-    mutationFn: (input: { id: string; status: "approved" | "rejected" | "paid" }) =>
-      updateWithdrawal({ data: input }),
+    mutationFn: (input: { id: string; status: "approved" | "rejected"; note?: string }) =>
+      updateWithdrawal({ data: { id: input.id, status: input.status, note: input.note ?? null } }),
     onSuccess: () => {
       toast.success("Withdrawal updated.");
-      void queryClient.invalidateQueries();
+      refresh();
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError,
   });
 
-  const kycAction = useMutation({
-    mutationFn: (input: { id: string; status: "approved" | "rejected" }) =>
-      updateKyc({ data: input }),
+  const claimAction = useMutation({
+    mutationFn: (input: { id: string; status: "approved" | "rejected"; note?: string }) =>
+      updateClaim({ data: { id: input.id, status: input.status, note: input.note ?? null } }),
     onSuccess: () => {
-      toast.success("Verification updated.");
-      void queryClient.invalidateQueries();
+      toast.success("Offer claim updated.");
+      refresh();
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError,
+  });
+
+  const ticketAction = useMutation({
+    mutationFn: (input: { id: string; response: string }) =>
+      respondTicket({ data: { id: input.id, response: input.response, status: "resolved" } }),
+    onSuccess: () => {
+      toast.success("Reply sent.");
+      refresh();
+    },
+    onError,
+  });
+
+  const flagAction = useMutation({
+    mutationFn: (input: { userId: string; flagged: boolean }) => setFlag({ data: input }),
+    onSuccess: () => {
+      toast.success("User updated.");
+      refresh();
+    },
+    onError,
+  });
+
+  const adjustAction = useMutation({
+    mutationFn: (input: { userId: string; amount: number; reason: string }) =>
+      adjustWallet({ data: input }),
+    onSuccess: () => {
+      toast.success("Wallet adjusted.");
+      refresh();
+    },
+    onError,
   });
 
   if (!isAdmin) {
@@ -65,84 +116,276 @@ function AdminPage() {
     );
   }
 
+  const totals = data.data?.totals;
+  const pendingWithdrawals = (data.data?.withdrawals ?? []).filter((w) => w.status === "pending");
+  const pendingClaims = (data.data?.claims ?? []).filter((c) => c.status === "pending");
+  const openTickets = (data.data?.tickets ?? []).filter((t) => t.status !== "resolved");
+
+  const note = (id: string) => notes[id] ?? "";
+  const setNote = (id: string, value: string) => setNotes((prev) => ({ ...prev, [id]: value }));
 
   return (
     <AppShell subtitle="Admin">
       <h1 className="mt-2 text-2xl">Admin panel</h1>
 
       <div className="mt-3 grid grid-cols-2 gap-3">
-        <div className="surface-card p-3">
-          <p className="text-xs text-muted-foreground">Pending payouts</p>
-          <p className="text-amount text-lg">{data.data?.withdrawals?.length ?? 0}</p>
-        </div>
-        <div className="surface-card p-3">
-          <p className="text-xs text-muted-foreground">Pending value</p>
-          <p className="text-amount text-lg">{formatMoney((data.data?.withdrawals ?? []).reduce((sum, w) => sum + Number(w.amount), 0))}</p>
-        </div>
+        <Stat label="Users" value={String(totals?.users ?? 0)} />
+        <Stat label="Flagged" value={String(totals?.flagged ?? 0)} />
+        <Stat label="Wallet liability" value={formatMoney(totals?.liability)} />
+        <Stat label="Lifetime paid out" value={formatMoney(totals?.withdrawn)} />
       </div>
 
-      <SectionTitle>Pending withdrawals</SectionTitle>
-      <ul className="space-y-2">
-        {(data.data?.withdrawals ?? []).map((request) => (
-          <li key={request.id} className="surface-card p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-amount">{formatMoney(request.amount)}</p>
-              <span className="text-xs text-muted-foreground">
-                {formatDateTime(request.created_at)}
-              </span>
-            </div>
-            <div className="mt-2 flex gap-2">
-              <Button
-                size="sm"
-                variant="jade"
-                onClick={() => withdrawalAction.mutate({ id: request.id, status: "approved" })}
-              >
-                Approve
-              </Button>
-              <Button
-                size="sm"
-                variant="gold"
-                onClick={() => withdrawalAction.mutate({ id: request.id, status: "paid" })}
-              >
-                Mark paid
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => withdrawalAction.mutate({ id: request.id, status: "rejected" })}
-              >
-                Reject
-              </Button>
-            </div>
-          </li>
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+        {(
+          [
+            ["withdrawals", `Payouts (${pendingWithdrawals.length})`],
+            ["claims", `Offers (${pendingClaims.length})`],
+            ["tickets", `Tickets (${openTickets.length})`],
+            ["users", "Users"],
+          ] as [TabKey, string][]
+        ).map(([key, label]) => (
+          <Button
+            key={key}
+            size="sm"
+            variant={tab === key ? "jade" : "outline"}
+            onClick={() => setTab(key)}
+          >
+            {label}
+          </Button>
         ))}
-      </ul>
+      </div>
 
-      <SectionTitle>Pending verifications</SectionTitle>
-      <ul className="space-y-2">
-        {(data.data?.kyc ?? []).map((submission) => (
-          <li key={submission.id} className="surface-card p-3">
-            <p className="font-semibold">{submission.full_name}</p>
-            <p className="text-xs text-muted-foreground">{formatDateTime(submission.created_at)}</p>
-            <div className="mt-2 flex gap-2">
-              <Button
-                size="sm"
-                variant="jade"
-                onClick={() => kycAction.mutate({ id: submission.id, status: "approved" })}
-              >
-                Approve
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => kycAction.mutate({ id: submission.id, status: "rejected" })}
-              >
-                Reject
-              </Button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {data.isLoading && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>}
+
+      {tab === "withdrawals" && (
+        <>
+          <SectionTitle>Withdrawal requests</SectionTitle>
+          {!data.data?.withdrawals.length ? (
+            <EmptyState icon={LifeBuoy} title="No withdrawals yet" description="Requests appear here for manual review." />
+          ) : (
+            <ul className="space-y-2">
+              {data.data.withdrawals.map((request) => (
+                <li key={request.id} className="surface-card p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-amount">{formatMoney(request.amount)}</p>
+                    <span className="rounded-full bg-background-alt px-2.5 py-1 text-[11px] font-semibold capitalize">
+                      {request.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {request.user?.name || request.user?.email || "Unknown user"} ·{" "}
+                    {formatDateTime(request.created_at)}
+                  </p>
+                  {request.status === "pending" && (
+                    <div className="mt-2 space-y-2">
+                      <Input
+                        placeholder="Optional note for the user"
+                        value={note(request.id)}
+                        onChange={(event) => setNote(request.id, event.target.value)}
+                        maxLength={300}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="jade"
+                          disabled={withdrawalAction.isPending}
+                          onClick={() =>
+                            withdrawalAction.mutate({
+                              id: request.id,
+                              status: "approved",
+                              note: note(request.id),
+                            })
+                          }
+                        >
+                          Approve & pay
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={withdrawalAction.isPending}
+                          onClick={() =>
+                            withdrawalAction.mutate({
+                              id: request.id,
+                              status: "rejected",
+                              note: note(request.id),
+                            })
+                          }
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {request.admin_note && (
+                    <p className="mt-2 text-xs text-muted-foreground">Note: {request.admin_note}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+
+      {tab === "claims" && (
+        <>
+          <SectionTitle>Offer claims</SectionTitle>
+          {!data.data?.claims.length ? (
+            <EmptyState icon={LifeBuoy} title="No offer claims" description="User offer submissions land here." />
+          ) : (
+            <ul className="space-y-2">
+              {data.data.claims.map((claim) => (
+                <li key={claim.id} className="surface-card p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold">{claim.offers?.title ?? "Offer"}</p>
+                    <span className="rounded-full bg-background-alt px-2.5 py-1 text-[11px] font-semibold capitalize">
+                      {claim.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {claim.user?.name || claim.user?.email || "Unknown"} ·{" "}
+                    {formatMoney(claim.reward_amount)} · {formatDateTime(claim.created_at)}
+                  </p>
+                  {claim.status === "pending" && (
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="jade"
+                        onClick={() => claimAction.mutate({ id: claim.id, status: "approved" })}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => claimAction.mutate({ id: claim.id, status: "rejected" })}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+
+      {tab === "tickets" && (
+        <>
+          <SectionTitle>Support tickets</SectionTitle>
+          {!data.data?.tickets.length ? (
+            <EmptyState icon={LifeBuoy} title="No tickets" description="User messages appear here." />
+          ) : (
+            <ul className="space-y-2">
+              {data.data.tickets.map((ticket) => (
+                <li key={ticket.id} className="surface-card p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate font-semibold">{ticket.subject}</p>
+                    <span className="rounded-full bg-background-alt px-2.5 py-1 text-[11px] font-semibold capitalize">
+                      {ticket.status}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {ticket.user?.email ?? "Unknown"} · {formatDateTime(ticket.created_at)}
+                  </p>
+                  <p className="mt-2 text-sm">{ticket.description}</p>
+                  {ticket.admin_response ? (
+                    <p className="mt-2 rounded-xl bg-background-alt p-2 text-sm">
+                      {ticket.admin_response}
+                    </p>
+                  ) : (
+                    <div className="mt-2 space-y-2">
+                      <Textarea
+                        rows={3}
+                        maxLength={1000}
+                        placeholder="Write a reply"
+                        value={note(ticket.id)}
+                        onChange={(event) => setNote(ticket.id, event.target.value)}
+                      />
+                      <Button
+                        size="sm"
+                        variant="jade"
+                        disabled={note(ticket.id).trim().length < 2 || ticketAction.isPending}
+                        onClick={() =>
+                          ticketAction.mutate({ id: ticket.id, response: note(ticket.id).trim() })
+                        }
+                      >
+                        Send reply
+                      </Button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+
+      {tab === "users" && (
+        <>
+          <SectionTitle>Users</SectionTitle>
+          <ul className="space-y-2">
+            {(data.data?.users ?? []).map((user) => (
+              <li key={user.id} className="surface-card p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate font-semibold">{user.name || user.email || user.id}</p>
+                  {user.is_flagged && (
+                    <span className="rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">
+                      Flagged
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {user.email} · {user.referral_code}
+                </p>
+                <p className="mt-1 text-xs">
+                  Balance {formatMoney(user.wallet_balance)} · Held {formatMoney(user.held_balance)} ·
+                  Earned {formatMoney(user.lifetime_earned)}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => flagAction.mutate({ userId: user.id, flagged: !user.is_flagged })}
+                  >
+                    {user.is_flagged ? "Unflag" : "Flag"}
+                  </Button>
+                  <Input
+                    className="h-9 w-28"
+                    placeholder="±$"
+                    inputMode="decimal"
+                    value={note(user.id)}
+                    onChange={(event) => setNote(user.id, event.target.value)}
+                  />
+                  <Button
+                    size="sm"
+                    variant="gold"
+                    disabled={!Number.isFinite(Number(note(user.id))) || !note(user.id)}
+                    onClick={() =>
+                      adjustAction.mutate({
+                        userId: user.id,
+                        amount: Number(note(user.id)),
+                        reason: "Manual admin adjustment",
+                      })
+                    }
+                  >
+                    Adjust
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </AppShell>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="surface-card p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-amount text-lg">{value}</p>
+    </div>
   );
 }
