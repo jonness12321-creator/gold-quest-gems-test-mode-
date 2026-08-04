@@ -30,7 +30,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { KYC_THRESHOLD, MIN_WITHDRAWAL, formatDateTime, formatMoney } from "@/lib/coinquest";
+import { MIN_WITHDRAWAL, formatDateTime, formatMoney } from "@/lib/coinquest";
 import { cancelWithdrawal, createWithdrawal } from "@/lib/coinquest.functions";
 
 export const Route = createFileRoute("/_authenticated/wallet")({
@@ -139,9 +139,8 @@ function WalletPage() {
     onError: (error: Error) => toast.error(error.message || "Couldn't cancel that request."),
   });
 
-  const needsKyc = lifetime >= KYC_THRESHOLD && profile?.kyc_status !== "approved";
   const canWithdraw =
-    Number(amount) >= MIN_WITHDRAWAL && Number(amount) <= balance && Boolean(methodId) && !needsKyc;
+    Number(amount) >= MIN_WITHDRAWAL && Number(amount) <= balance - pending && Boolean(methodId);
 
   return (
     <AppShell subtitle="Wallet">
@@ -160,18 +159,16 @@ function WalletPage() {
         </div>
       </section>
 
-      {needsKyc && (
-        <div className="surface-card mt-4 flex items-start gap-3 p-4">
-          <ShieldCheck className="mt-0.5 size-5 text-gold-dark" />
-          <div>
-            <p className="font-semibold">Verification required</p>
-            <p className="text-xs text-muted-foreground">
-              You've earned over {formatMoney(KYC_THRESHOLD)}. Verify your identity in Profile before
-              withdrawing.
-            </p>
-          </div>
+      <div className="surface-card mt-4 flex items-start gap-3 p-4">
+        <ShieldCheck className="mt-0.5 size-5 text-primary" />
+        <div>
+          <p className="font-semibold">Manual payout review</p>
+          <p className="text-xs text-muted-foreground">
+            Every withdrawal is reviewed by our team, usually within 48 hours.
+          </p>
         </div>
-      )}
+      </div>
+
 
       <SectionTitle
         action={
