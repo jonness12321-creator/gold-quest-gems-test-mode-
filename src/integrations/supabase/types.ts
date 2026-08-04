@@ -41,39 +41,6 @@ export type Database = {
         }
         Relationships: []
       }
-      kyc_submissions: {
-        Row: {
-          admin_note: string | null
-          created_at: string
-          full_name: string
-          id: string
-          id_number: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          admin_note?: string | null
-          created_at?: string
-          full_name: string
-          id?: string
-          id_number: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          admin_note?: string | null
-          created_at?: string
-          full_name?: string
-          id?: string
-          id_number?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       notifications: {
         Row: {
           body: string
@@ -103,6 +70,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      offer_claims: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          id: string
+          offer_id: string
+          reward_amount: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          id?: string
+          offer_id: string
+          reward_amount?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          id?: string
+          offer_id?: string
+          reward_amount?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_claims_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       offers: {
         Row: {
@@ -194,7 +202,6 @@ export type Database = {
           held_balance: number
           id: string
           is_flagged: boolean
-          kyc_status: string
           language: string
           lifetime_earned: number
           lifetime_withdrawn: number
@@ -217,7 +224,6 @@ export type Database = {
           held_balance?: number
           id: string
           is_flagged?: boolean
-          kyc_status?: string
           language?: string
           lifetime_earned?: number
           lifetime_withdrawn?: number
@@ -240,7 +246,6 @@ export type Database = {
           held_balance?: number
           id?: string
           is_flagged?: boolean
-          kyc_status?: string
           language?: string
           lifetime_earned?: number
           lifetime_withdrawn?: number
