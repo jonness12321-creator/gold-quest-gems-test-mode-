@@ -53,7 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     enabled: Boolean(userId),
     queryFn: async () => {
       const { data } = await supabase.from("profiles").select("*").eq("id", userId!).maybeSingle();
-      return data ?? null;
+      if (data) return data;
+      // First sign-in: create the profile row (wallet, referral code, device id).
+      const referralCode =
+        typeof window !== "undefined"
+          ? (window.localStorage.getItem("coinquest.ref") ?? undefined)
+          : undefined;
+      return (await ensureProfile({
+        data: { deviceId: getDeviceId(), ...(referralCode ? { referralCode } : {}) },
+      })) as Profile;
     },
   });
 
