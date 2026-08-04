@@ -4,6 +4,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { getDeviceId } from "@/lib/ads";
+import { ensureProfile } from "@/lib/coinquest.functions";
 
 export type Profile = Tables<"profiles">;
 
