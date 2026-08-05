@@ -36,4 +36,17 @@ export const userTasksQuery = (userId?: string) => ({
   },
 });
 
+export const offerClaimsQuery = () => ({
+  queryKey: ["offer-claims"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("offer_claims")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+});
+
 export const useOffers = (featuredOnly: boolean) => useQuery(offersQuery(featuredOnly));
+export const useOfferClaims = () => useQuery(offerClaimsQuery());
