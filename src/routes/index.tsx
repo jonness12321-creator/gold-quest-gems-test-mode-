@@ -9,13 +9,18 @@ export const Route = createFileRoute("/")({
 });
 
 function Splash() {
-  const { session, loading } = useAuth();
+  const { session, loading, profile, profileLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (loading) return;
-    navigate({ to: session ? "/home" : "/auth", replace: true });
-  }, [session, loading, navigate]);
+    if (!session) {
+      navigate({ to: "/auth", replace: true });
+      return;
+    }
+    if (profileLoading) return;
+    navigate({ to: profile && !profile.onboarded ? "/onboarding" : "/home", replace: true });
+  }, [session, loading, profile, profileLoading, navigate]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 text-center">
