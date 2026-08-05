@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Flame, Sparkles } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
@@ -23,6 +24,10 @@ export const Route = createFileRoute("/_authenticated/home")({
 
 function HomePage() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (profile && !profile.onboarded) void navigate({ to: "/onboarding", replace: true });
+  }, [profile, navigate]);
   const streak = profile?.streak_count ?? 0;
   const goal = 7;
 
