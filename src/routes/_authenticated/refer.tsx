@@ -8,7 +8,7 @@ import { EmptyState, SectionTitle } from "@/components/States";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { formatDate, formatMoney } from "@/lib/coinquest";
+import { REFERRAL_BONUS, formatDate, formatMoney } from "@/lib/coinquest";
 
 export const Route = createFileRoute("/_authenticated/refer")({
   head: () => ({
@@ -44,7 +44,7 @@ function ReferPage() {
       <section className="rounded-3xl bg-jade-gradient p-5 text-primary-foreground shadow-lift">
         <h1 className="text-2xl">Invite friends, earn more</h1>
         <p className="mt-1 text-sm opacity-80">
-          You both get bonus credit once they finish their first quest.
+          You earn {formatMoney(REFERRAL_BONUS)} once a friend finishes their first quest.
         </p>
         <p className="text-amount mt-4 rounded-2xl bg-primary-foreground/10 px-4 py-3 text-center text-2xl tracking-widest">
           {code || "—"}

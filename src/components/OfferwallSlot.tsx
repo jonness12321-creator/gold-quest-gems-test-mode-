@@ -1,7 +1,6 @@
 import { ExternalLink, Layers } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 /**
  * INTEGRATION POINT — offerwall networks.
@@ -11,10 +10,10 @@ import { toast } from "sonner";
  * once the Capacitor shell is added.
  */
 const NETWORKS = [
-  { name: "AdGem", description: "Games & app installs", range: "$0.20 – $18.00" },
-  { name: "OfferToro", description: "Surveys and sign-ups", range: "$0.10 – $12.00" },
-  { name: "Digital Turbine", description: "Premium partner offers", range: "$0.50 – $25.00" },
-  { name: "Torox", description: "Quick micro tasks", range: "$0.05 – $4.00" },
+  { name: "AdGem", description: "Games & app installs" },
+  { name: "OfferToro", description: "Surveys and sign-ups" },
+  { name: "Digital Turbine", description: "Premium partner offers" },
+  { name: "Torox", description: "Quick micro tasks" },
 ] as const;
 
 export function OfferwallSlot() {
@@ -29,14 +28,8 @@ export function OfferwallSlot() {
             <p className="font-semibold leading-tight">{network.name}</p>
             <p className="text-xs text-muted-foreground">{network.description}</p>
           </div>
-          <p className="text-amount text-sm text-gold-dark">{network.range}</p>
-          <Button
-            size="sm"
-            variant="outline"
-            className="mt-auto gap-1"
-            onClick={() => toast.info(`${network.name} opens once the mobile app wrapper is installed.`)}
-          >
-            Open <ExternalLink className="size-3.5" />
+          <Button size="sm" variant="outline" className="mt-auto gap-1" disabled>
+            Mobile app only <ExternalLink className="size-3.5" />
           </Button>
         </article>
       ))}

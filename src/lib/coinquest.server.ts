@@ -4,6 +4,7 @@ import {
   MIN_SECONDS_PER_AD,
   MIN_WITHDRAWAL,
   QUESTS,
+  REFERRAL_BONUS,
   STREAK_BONUS,
   STREAK_GOAL,
 } from "./coinquest";
@@ -100,7 +101,7 @@ export async function ensureProfileImpl(input: {
       referrer_id: referrerId,
       referred_id: input.userId,
       code: referredBy!,
-      bonus_amount: 0.5,
+      bonus_amount: REFERRAL_BONUS,
       status: "pending",
     });
     await notify(referrerId, "New referral joined", "A friend signed up with your code.", "referral");

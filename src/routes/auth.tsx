@@ -33,6 +33,12 @@ function AuthPage() {
   const { session } = useAuth();
   const navigate = useNavigate();
 
+  // Capture ?ref=CODE from an invite link so the profile is attributed on first sign-in.
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (ref) window.localStorage.setItem("coinquest.ref", ref.trim().toUpperCase().slice(0, 20));
+  }, []);
+
   useEffect(() => {
     if (session) navigate({ to: "/home", replace: true });
   }, [session, navigate]);
