@@ -8,7 +8,7 @@ import { EmptyState, SectionTitle } from "@/components/States";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { formatDate, formatMoney } from "@/lib/coinquest";
+import { REFERRAL_BONUS, formatDate, formatMoney } from "@/lib/coinquest";
 
 export const Route = createFileRoute("/_authenticated/refer")({
   head: () => ({

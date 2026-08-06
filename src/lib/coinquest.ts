@@ -14,6 +14,8 @@ export const MAX_ADS_PER_HOUR = 80;
 /** Consecutive active days needed for a streak bonus. */
 export const STREAK_GOAL = 7;
 export const STREAK_BONUS = 1;
+/** Credit paid to the referrer once their invitee finishes a first quest. */
+export const REFERRAL_BONUS = 0.5;
 
 export function formatMoney(value: number | string | null | undefined): string {
   const n = typeof value === "string" ? Number(value) : (value ?? 0);
