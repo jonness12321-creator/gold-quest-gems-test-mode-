@@ -13,9 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedFeaturedRouteImport } from './routes/_authenticated/featured'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedOffersRouteImport } from './routes/_authenticated/offers'
+import { Route as AuthenticatedOfferwallRouteImport } from './routes/_authenticated/offerwall'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedReferRouteImport } from './routes/_authenticated/refer'
@@ -43,6 +45,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFeaturedRoute = AuthenticatedFeaturedRouteImport.update({
+  id: '/featured',
+  path: '/featured',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -57,6 +64,11 @@ const AuthenticatedNotificationsRoute =
 const AuthenticatedOffersRoute = AuthenticatedOffersRouteImport.update({
   id: '/offers',
   path: '/offers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOfferwallRoute = AuthenticatedOfferwallRouteImport.update({
+  id: '/offerwall',
+  path: '/offerwall',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
@@ -99,9 +111,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/featured': typeof AuthenticatedFeaturedRoute
   '/home': typeof AuthenticatedHomeRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/offers': typeof AuthenticatedOffersRoute
+  '/offerwall': typeof AuthenticatedOfferwallRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/refer': typeof AuthenticatedReferRoute
@@ -114,9 +128,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/featured': typeof AuthenticatedFeaturedRoute
   '/home': typeof AuthenticatedHomeRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/offers': typeof AuthenticatedOffersRoute
+  '/offerwall': typeof AuthenticatedOfferwallRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/refer': typeof AuthenticatedReferRoute
@@ -131,9 +147,11 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/featured': typeof AuthenticatedFeaturedRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/offers': typeof AuthenticatedOffersRoute
+  '/_authenticated/offerwall': typeof AuthenticatedOfferwallRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/refer': typeof AuthenticatedReferRoute
@@ -148,9 +166,11 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/featured'
     | '/home'
     | '/notifications'
     | '/offers'
+    | '/offerwall'
     | '/onboarding'
     | '/profile'
     | '/refer'
@@ -163,9 +183,11 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/featured'
     | '/home'
     | '/notifications'
     | '/offers'
+    | '/offerwall'
     | '/onboarding'
     | '/profile'
     | '/refer'
@@ -179,9 +201,11 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/_authenticated/featured'
     | '/_authenticated/home'
     | '/_authenticated/notifications'
     | '/_authenticated/offers'
+    | '/_authenticated/offerwall'
     | '/_authenticated/onboarding'
     | '/_authenticated/profile'
     | '/_authenticated/refer'
@@ -228,6 +252,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/featured': {
+      id: '/_authenticated/featured'
+      path: '/featured'
+      fullPath: '/featured'
+      preLoaderRoute: typeof AuthenticatedFeaturedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/home': {
       id: '/_authenticated/home'
       path: '/home'
@@ -247,6 +278,13 @@ declare module '@tanstack/react-router' {
       path: '/offers'
       fullPath: '/offers'
       preLoaderRoute: typeof AuthenticatedOffersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/offerwall': {
+      id: '/_authenticated/offerwall'
+      path: '/offerwall'
+      fullPath: '/offerwall'
+      preLoaderRoute: typeof AuthenticatedOfferwallRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/onboarding': {
@@ -303,9 +341,11 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedFeaturedRoute: typeof AuthenticatedFeaturedRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOffersRoute: typeof AuthenticatedOffersRoute
+  AuthenticatedOfferwallRoute: typeof AuthenticatedOfferwallRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedReferRoute: typeof AuthenticatedReferRoute
@@ -316,9 +356,11 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedFeaturedRoute: AuthenticatedFeaturedRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOffersRoute: AuthenticatedOffersRoute,
+  AuthenticatedOfferwallRoute: AuthenticatedOfferwallRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedReferRoute: AuthenticatedReferRoute,

@@ -47,23 +47,31 @@ function HomePage() {
       <SectionTitle>Starter Quests</SectionTitle>
       <StarterQuests />
 
-      <SectionTitle
-        action={
-          <Link to="/offers" className="text-xs font-semibold text-primary underline-offset-4 hover:underline">
-            See all
-          </Link>
-        }
-      >
-        Featured Offers
-      </SectionTitle>
-      <FeaturedOffers />
+      <SectionTitle>Featured Offers</SectionTitle>
+      <FeaturedOffers limit={9} />
+      <div className="mt-3 flex justify-center">
+        <Link
+          to="/featured"
+          className="text-xs font-semibold text-primary underline-offset-4 hover:underline"
+        >
+          View All
+        </Link>
+      </div>
 
       <SectionTitle>
         <span className="flex items-center gap-2">
           Offerwall <Sparkles className="size-4 text-gold-dark" />
         </span>
       </SectionTitle>
-      <OfferwallSlot />
+      <OfferwallSlot limit={6} />
+      <div className="mt-3 flex justify-center">
+        <Link
+          to="/offerwall"
+          className="text-xs font-semibold text-primary underline-offset-4 hover:underline"
+        >
+          View All
+        </Link>
+      </div>
       <p className="mt-3 text-center text-xs text-muted-foreground">
         Partner networks activate in the mobile app.
       </p>

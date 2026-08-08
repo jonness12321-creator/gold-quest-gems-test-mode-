@@ -14,12 +14,16 @@ const NETWORKS = [
   { name: "OfferToro", description: "Surveys and sign-ups" },
   { name: "Digital Turbine", description: "Premium partner offers" },
   { name: "Torox", description: "Quick micro tasks" },
+  { name: "Adscend", description: "Sign-up and trial offers" },
+  { name: "Pollfish", description: "Paid survey panels" },
 ] as const;
 
-export function OfferwallSlot() {
+export function OfferwallSlot({ limit }: { limit?: number }) {
+  const networks = typeof limit === "number" ? NETWORKS.slice(0, limit) : NETWORKS;
+
   return (
     <div className="grid grid-cols-2 gap-3">
-      {NETWORKS.map((network) => (
+      {networks.map((network) => (
         <article key={network.name} className="surface-card flex flex-col gap-2 p-3">
           <span className="grid size-9 place-items-center rounded-xl bg-jade-gradient text-primary-foreground">
             <Layers className="size-4" />
