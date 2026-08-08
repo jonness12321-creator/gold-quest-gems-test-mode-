@@ -306,28 +306,37 @@ export type Database = {
           bonus_amount: number
           code: string
           created_at: string
+          earning_credited_at: string | null
           id: string
           referred_id: string
           referrer_id: string
+          signup_credited_at: string | null
           status: string
+          withdrawal_credited_at: string | null
         }
         Insert: {
           bonus_amount?: number
           code: string
           created_at?: string
+          earning_credited_at?: string | null
           id?: string
           referred_id: string
           referrer_id: string
+          signup_credited_at?: string | null
           status?: string
+          withdrawal_credited_at?: string | null
         }
         Update: {
           bonus_amount?: number
           code?: string
           created_at?: string
+          earning_credited_at?: string | null
           id?: string
           referred_id?: string
           referrer_id?: string
+          signup_credited_at?: string | null
           status?: string
+          withdrawal_credited_at?: string | null
         }
         Relationships: []
       }
