@@ -229,10 +229,55 @@ async function payReferralMilestone(
 ) {
   const referral = await supabaseAdmin
     .from("referrals")
-    .select("id")
+    .select("*")
     .eq("referred_id", referredUserId)
     .maybeSingle();
   if (!referral.data) return;
+
+  const expired =
+    Date.now() - new Date(referral.data.created_at).getTime() >
+    REFERRAL_WINDOW_DAYS * 86_400_000;
+
+  // Past the 1-year window the referral pays nothing and already-credited
+  // milestones are reversed from the referrer's balance.
+  if (expired) {
+    if (milestone !== "withdrawal") return;
+    const credited = Number(referral.data.bonus_amount ?? 0);
+    if (credited <= 0) return;
+    const referrer = await supabaseAdmin
+      .from("profiles")
+      .select("wallet_balance, lifetime_earned")
+      .eq("id", referral.data.referrer_id)
+      .single();
+    if (referrer.error) return;
+    await supabaseAdmin
+      .from("profiles")
+      .update({
+        wallet_balance: Number(referrer.data.wallet_balance) - credited,
+        lifetime_earned: Math.max(0, Number(referrer.data.lifetime_earned) - credited),
+      })
+      .eq("id", referral.data.referrer_id);
+    await supabaseAdmin.from("wallet_transactions").insert({
+      user_id: referral.data.referrer_id,
+      source: "referral",
+      description: "Referral rewards reversed (1-year limit)",
+      amount: -credited,
+      kind: "adjustment",
+      status: "completed",
+    });
+    await supabaseAdmin
+      .from("referrals")
+      .update({ bonus_amount: 0, status: "expired" })
+      .eq("id", referral.data.id);
+    await notify(
+      referral.data.referrer_id,
+      "Referral rewards reversed",
+      "A referral did not complete all milestones within 1 year.",
+      "referral",
+    );
+    return;
+  }
+
   await creditReferralMilestone(referral.data.id, milestone, description);
 }
 
