@@ -265,7 +265,9 @@ async function creditWallet(
     kind,
     status: "completed",
   });
-  if (firstEarning) await payReferralBonus(userId);
+  if (firstEarning && ["quest", "task", "offer"].includes(source)) {
+    await payReferralMilestone(userId, "earning", "Referral: friend's first earning");
+  }
 }
 
 function today(): string {
