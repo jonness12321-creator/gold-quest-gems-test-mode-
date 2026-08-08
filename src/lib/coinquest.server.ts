@@ -97,14 +97,21 @@ export async function ensureProfileImpl(input: {
   if (inserted.error) throw new Error("Could not create your profile. Please try again.");
 
   if (referrerId) {
-    await supabaseAdmin.from("referrals").insert({
-      referrer_id: referrerId,
-      referred_id: input.userId,
-      code: referredBy!,
-      bonus_amount: REFERRAL_BONUS,
-      status: "pending",
-    });
+    const referral = await supabaseAdmin
+      .from("referrals")
+      .insert({
+        referrer_id: referrerId,
+        referred_id: input.userId,
+        code: referredBy!,
+        bonus_amount: 0,
+        status: "pending",
+      })
+      .select("*")
+      .single();
     await notify(referrerId, "New referral joined", "A friend signed up with your code.", "referral");
+    if (referral.data) {
+      await creditReferralMilestone(referral.data.id, "signup", "Referral: friend signed up");
+    }
   }
 
   await notify(
