@@ -595,6 +595,11 @@ export async function adminUpdateWithdrawalImpl(id: string, status: string, note
       note ?? `$${amount.toFixed(2)} has been sent to your payout method.`,
       "wallet",
     );
+    await payReferralMilestone(
+      req.data.user_id,
+      "withdrawal",
+      "Referral: friend's first withdrawal",
+    );
   } else if (status === "rejected") {
     await supabaseAdmin
       .from("profiles")
