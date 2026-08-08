@@ -10,7 +10,13 @@ import { claimOffer } from "@/lib/coinquest.functions";
 import { useOfferClaims, useOffers } from "@/lib/queries";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function FeaturedOffers({ featuredOnly = true }: { featuredOnly?: boolean }) {
+export function FeaturedOffers({
+  featuredOnly = true,
+  limit,
+}: {
+  featuredOnly?: boolean;
+  limit?: number;
+}) {
   const { data, isLoading, isError, refetch } = useOffers(featuredOnly);
   const claims = useOfferClaims();
   const queryClient = useQueryClient();
@@ -28,9 +34,9 @@ export function FeaturedOffers({ featuredOnly = true }: { featuredOnly?: boolean
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-20 w-full rounded-2xl" />
+      <div className="grid grid-cols-3 gap-3">
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+          <Skeleton key={i} className="h-40 w-full rounded-2xl" />
         ))}
       </div>
     );
@@ -46,51 +52,52 @@ export function FeaturedOffers({ featuredOnly = true }: { featuredOnly?: boolean
     );
   }
 
+  const offers = typeof limit === "number" ? data.slice(0, limit) : data;
+
   return (
-    <ul className="space-y-3">
-      {data.map((offer) => {
+    <ul className="grid grid-cols-3 gap-3">
+      {offers.map((offer) => {
         const existing = (claims.data ?? []).find((c) => c.offer_id === offer.id);
         const pending = mutation.isPending && mutation.variables === offer.id;
         return (
-          <li key={offer.id} className="surface-card flex items-center gap-3 p-3">
-            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-background-alt">
-              <Gift className="size-5 text-primary" />
+          <li key={offer.id} className="surface-card flex flex-col gap-2 p-3">
+            <span className="grid size-9 place-items-center rounded-xl bg-background-alt">
+              <Gift className="size-4 text-primary" />
             </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold">{offer.title}</p>
-              <p className="truncate text-xs text-muted-foreground">{offer.description}</p>
-              <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                {offer.requirements}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold leading-tight">{offer.title}</p>
+              <p className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                {offer.description}
               </p>
             </div>
-            <div className="flex flex-col items-end gap-1.5">
-              <span className="text-amount text-gold-dark">{formatMoney(offer.reward_amount)}</span>
-              {existing ? (
-                <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
-                  {existing.status === "approved" ? (
-                    <>
-                      <Check className="size-3.5 text-primary" /> Approved
-                    </>
-                  ) : existing.status === "rejected" ? (
-                    <>Rejected</>
-                  ) : (
-                    <>
-                      <Clock className="size-3.5" /> In review
-                    </>
-                  )}
-                </span>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="mint"
-                  className="gap-1"
-                  disabled={pending}
-                  onClick={() => mutation.mutate(offer.id)}
-                >
-                  {pending ? "Sending…" : "Claim"} <ArrowUpRight className="size-3.5" />
-                </Button>
-              )}
-            </div>
+            <span className="text-amount text-sm text-gold-dark">
+              {formatMoney(offer.reward_amount)}
+            </span>
+            {existing ? (
+              <span className="mt-auto flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+                {existing.status === "approved" ? (
+                  <>
+                    <Check className="size-3.5 text-primary" /> Approved
+                  </>
+                ) : existing.status === "rejected" ? (
+                  <>Rejected</>
+                ) : (
+                  <>
+                    <Clock className="size-3.5" /> In review
+                  </>
+                )}
+              </span>
+            ) : (
+              <Button
+                size="sm"
+                variant="mint"
+                className="mt-auto w-full gap-1 px-2 text-xs"
+                disabled={pending}
+                onClick={() => mutation.mutate(offer.id)}
+              >
+                {pending ? "Sending…" : "Claim"} <ArrowUpRight className="size-3.5" />
+              </Button>
+            )}
           </li>
         );
       })}

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/AppShell";
 import { FeaturedOffers } from "@/components/FeaturedOffers";
@@ -23,11 +23,27 @@ function OffersPage() {
       <h1 className="mt-2 text-2xl">Offers</h1>
       <p className="text-sm text-muted-foreground">Complete partner offers for bigger payouts.</p>
 
-      <SectionTitle>Featured</SectionTitle>
-      <FeaturedOffers />
+      <SectionTitle>Featured Offers</SectionTitle>
+      <FeaturedOffers limit={9} />
+      <div className="mt-3 flex justify-center">
+        <Link
+          to="/featured"
+          className="text-xs font-semibold text-primary underline-offset-4 hover:underline"
+        >
+          View All
+        </Link>
+      </div>
 
       <SectionTitle>Offerwall</SectionTitle>
-      <OfferwallSlot />
+      <OfferwallSlot limit={6} />
+      <div className="mt-3 flex justify-center">
+        <Link
+          to="/offerwall"
+          className="text-xs font-semibold text-primary underline-offset-4 hover:underline"
+        >
+          View All
+        </Link>
+      </div>
     </AppShell>
   );
 }
