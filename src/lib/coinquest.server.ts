@@ -178,13 +178,21 @@ async function creditReferralMilestone(
     .single();
   if (referrer.error) return;
 
+  const patch: {
+    bonus_amount: number;
+    status: string;
+    signup_credited_at?: string;
+    earning_credited_at?: string;
+    withdrawal_credited_at?: string;
+  } = {
+    bonus_amount: Number(referral.data.bonus_amount ?? 0) + bonus,
+    status: milestone === "withdrawal" ? "completed" : "credited",
+  };
+  patch[column] = new Date().toISOString();
+
   const claimed = await supabaseAdmin
     .from("referrals")
-    .update({
-      [column]: new Date().toISOString(),
-      bonus_amount: Number(referral.data.bonus_amount ?? 0) + bonus,
-      status: milestone === "withdrawal" ? "completed" : "credited",
-    })
+    .update(patch)
     .eq("id", referralId)
     .is(column, null)
     .select("id");
