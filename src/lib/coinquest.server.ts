@@ -4,7 +4,8 @@ import {
   MIN_SECONDS_PER_AD,
   MIN_WITHDRAWAL,
   QUESTS,
-  REFERRAL_BONUS,
+  REFERRAL_MILESTONE_BONUS,
+  REFERRAL_WINDOW_DAYS,
   STREAK_BONUS,
   STREAK_GOAL,
 } from "./coinquest";
@@ -97,14 +98,21 @@ export async function ensureProfileImpl(input: {
   if (inserted.error) throw new Error("Could not create your profile. Please try again.");
 
   if (referrerId) {
-    await supabaseAdmin.from("referrals").insert({
-      referrer_id: referrerId,
-      referred_id: input.userId,
-      code: referredBy!,
-      bonus_amount: REFERRAL_BONUS,
-      status: "pending",
-    });
+    const referral = await supabaseAdmin
+      .from("referrals")
+      .insert({
+        referrer_id: referrerId,
+        referred_id: input.userId,
+        code: referredBy!,
+        bonus_amount: 0,
+        status: "pending",
+      })
+      .select("*")
+      .single();
     await notify(referrerId, "New referral joined", "A friend signed up with your code.", "referral");
+    if (referral.data) {
+      await creditReferralMilestone(referral.data.id, "signup", "Referral: friend signed up");
+    }
   }
 
   await notify(
@@ -137,22 +145,59 @@ export async function completeOnboardingImpl(
   return data;
 }
 
-async function payReferralBonus(userId: string) {
+type ReferralMilestone = "signup" | "earning" | "withdrawal";
+
+const MILESTONE_COLUMN = {
+  signup: "signup_credited_at",
+  earning: "earning_credited_at",
+  withdrawal: "withdrawal_credited_at",
+} as const;
+
+/**
+ * Credits one $1 referral milestone. Idempotent: the milestone timestamp column
+ * acts as the guard so the same milestone can never pay twice.
+ */
+async function creditReferralMilestone(
+  referralId: string,
+  milestone: ReferralMilestone,
+  description: string,
+) {
+  const column = MILESTONE_COLUMN[milestone];
   const referral = await supabaseAdmin
     .from("referrals")
     .select("*")
-    .eq("referred_id", userId)
-    .eq("status", "pending")
+    .eq("id", referralId)
     .maybeSingle();
   if (!referral.data) return;
+  if (referral.data[column]) return; // already credited
 
-  const bonus = Number(referral.data.bonus_amount);
+  const bonus = REFERRAL_MILESTONE_BONUS;
   const referrer = await supabaseAdmin
     .from("profiles")
     .select("wallet_balance, lifetime_earned")
     .eq("id", referral.data.referrer_id)
     .single();
   if (referrer.error) return;
+
+  const patch: {
+    bonus_amount: number;
+    status: string;
+    signup_credited_at?: string;
+    earning_credited_at?: string;
+    withdrawal_credited_at?: string;
+  } = {
+    bonus_amount: Number(referral.data.bonus_amount ?? 0) + bonus,
+    status: milestone === "withdrawal" ? "completed" : "credited",
+  };
+  patch[column] = new Date().toISOString();
+
+  const claimed = await supabaseAdmin
+    .from("referrals")
+    .update(patch)
+    .eq("id", referralId)
+    .is(column, null)
+    .select("id");
+  if (!claimed.data?.length) return; // another run already credited it
 
   await supabaseAdmin
     .from("profiles")
@@ -164,18 +209,77 @@ async function payReferralBonus(userId: string) {
   await supabaseAdmin.from("wallet_transactions").insert({
     user_id: referral.data.referrer_id,
     source: "referral",
-    description: "Referral bonus",
+    description,
     amount: bonus,
     kind: "bonus",
     status: "completed",
   });
-  await supabaseAdmin.from("referrals").update({ status: "credited" }).eq("id", referral.data.id);
   await notify(
     referral.data.referrer_id,
     "Referral bonus earned",
-    `Your friend started earning — $${bonus.toFixed(2)} added.`,
+    `${description} — $${bonus.toFixed(2)} added.`,
     "referral",
   );
+}
+
+/** Looks up the referral row for a referred user and credits a milestone once. */
+async function payReferralMilestone(
+  referredUserId: string,
+  milestone: ReferralMilestone,
+  description: string,
+) {
+  const referral = await supabaseAdmin
+    .from("referrals")
+    .select("*")
+    .eq("referred_id", referredUserId)
+    .maybeSingle();
+  if (!referral.data) return;
+
+  const expired =
+    Date.now() - new Date(referral.data.created_at).getTime() >
+    REFERRAL_WINDOW_DAYS * 86_400_000;
+
+  // Past the 1-year window the referral pays nothing and already-credited
+  // milestones are reversed from the referrer's balance.
+  if (expired) {
+    if (milestone !== "withdrawal") return;
+    const credited = Number(referral.data.bonus_amount ?? 0);
+    if (credited <= 0) return;
+    const referrer = await supabaseAdmin
+      .from("profiles")
+      .select("wallet_balance, lifetime_earned")
+      .eq("id", referral.data.referrer_id)
+      .single();
+    if (referrer.error) return;
+    await supabaseAdmin
+      .from("profiles")
+      .update({
+        wallet_balance: Number(referrer.data.wallet_balance) - credited,
+        lifetime_earned: Math.max(0, Number(referrer.data.lifetime_earned) - credited),
+      })
+      .eq("id", referral.data.referrer_id);
+    await supabaseAdmin.from("wallet_transactions").insert({
+      user_id: referral.data.referrer_id,
+      source: "referral",
+      description: "Referral rewards reversed (1-year limit)",
+      amount: -credited,
+      kind: "adjustment",
+      status: "completed",
+    });
+    await supabaseAdmin
+      .from("referrals")
+      .update({ bonus_amount: 0, status: "expired" })
+      .eq("id", referral.data.id);
+    await notify(
+      referral.data.referrer_id,
+      "Referral rewards reversed",
+      "A referral did not complete all milestones within 1 year.",
+      "referral",
+    );
+    return;
+  }
+
+  await creditReferralMilestone(referral.data.id, milestone, description);
 }
 
 async function creditWallet(
@@ -207,7 +311,9 @@ async function creditWallet(
     kind,
     status: "completed",
   });
-  if (firstEarning) await payReferralBonus(userId);
+  if (firstEarning && ["quest", "task", "offer"].includes(source)) {
+    await payReferralMilestone(userId, "earning", "Referral: friend's first earning");
+  }
 }
 
 function today(): string {
@@ -534,6 +640,11 @@ export async function adminUpdateWithdrawalImpl(id: string, status: string, note
       "Withdrawal approved",
       note ?? `$${amount.toFixed(2)} has been sent to your payout method.`,
       "wallet",
+    );
+    await payReferralMilestone(
+      req.data.user_id,
+      "withdrawal",
+      "Referral: friend's first withdrawal",
     );
   } else if (status === "rejected") {
     await supabaseAdmin

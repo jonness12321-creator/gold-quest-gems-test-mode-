@@ -14,8 +14,12 @@ export const MAX_ADS_PER_HOUR = 80;
 /** Consecutive active days needed for a streak bonus. */
 export const STREAK_GOAL = 7;
 export const STREAK_BONUS = 1;
-/** Credit paid to the referrer once their invitee finishes a first quest. */
-export const REFERRAL_BONUS = 0.5;
+/** Credit paid to the referrer per referral milestone. */
+export const REFERRAL_MILESTONE_BONUS = 1;
+/** Maximum a referrer can earn from a single referral (3 x $1 milestones). */
+export const REFERRAL_MAX_BONUS = REFERRAL_MILESTONE_BONUS * 3;
+/** Days a referral has to complete all milestones before the credited bonuses are reversed. */
+export const REFERRAL_WINDOW_DAYS = 365;
 
 export function formatMoney(value: number | string | null | undefined): string {
   const n = typeof value === "string" ? Number(value) : (value ?? 0);
