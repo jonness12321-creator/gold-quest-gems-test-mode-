@@ -144,22 +144,51 @@ export async function completeOnboardingImpl(
   return data;
 }
 
-async function payReferralBonus(userId: string) {
+type ReferralMilestone = "signup" | "earning" | "withdrawal";
+
+const MILESTONE_COLUMN = {
+  signup: "signup_credited_at",
+  earning: "earning_credited_at",
+  withdrawal: "withdrawal_credited_at",
+} as const;
+
+/**
+ * Credits one $1 referral milestone. Idempotent: the milestone timestamp column
+ * acts as the guard so the same milestone can never pay twice.
+ */
+async function creditReferralMilestone(
+  referralId: string,
+  milestone: ReferralMilestone,
+  description: string,
+) {
+  const column = MILESTONE_COLUMN[milestone];
   const referral = await supabaseAdmin
     .from("referrals")
     .select("*")
-    .eq("referred_id", userId)
-    .eq("status", "pending")
+    .eq("id", referralId)
     .maybeSingle();
   if (!referral.data) return;
+  if (referral.data[column]) return; // already credited
 
-  const bonus = Number(referral.data.bonus_amount);
+  const bonus = REFERRAL_MILESTONE_BONUS;
   const referrer = await supabaseAdmin
     .from("profiles")
     .select("wallet_balance, lifetime_earned")
     .eq("id", referral.data.referrer_id)
     .single();
   if (referrer.error) return;
+
+  const claimed = await supabaseAdmin
+    .from("referrals")
+    .update({
+      [column]: new Date().toISOString(),
+      bonus_amount: Number(referral.data.bonus_amount ?? 0) + bonus,
+      status: milestone === "withdrawal" ? "completed" : "credited",
+    })
+    .eq("id", referralId)
+    .is(column, null)
+    .select("id");
+  if (!claimed.data?.length) return; // another run already credited it
 
   await supabaseAdmin
     .from("profiles")
@@ -171,18 +200,32 @@ async function payReferralBonus(userId: string) {
   await supabaseAdmin.from("wallet_transactions").insert({
     user_id: referral.data.referrer_id,
     source: "referral",
-    description: "Referral bonus",
+    description,
     amount: bonus,
     kind: "bonus",
     status: "completed",
   });
-  await supabaseAdmin.from("referrals").update({ status: "credited" }).eq("id", referral.data.id);
   await notify(
     referral.data.referrer_id,
     "Referral bonus earned",
-    `Your friend started earning — $${bonus.toFixed(2)} added.`,
+    `${description} — $${bonus.toFixed(2)} added.`,
     "referral",
   );
+}
+
+/** Looks up the referral row for a referred user and credits a milestone once. */
+async function payReferralMilestone(
+  referredUserId: string,
+  milestone: ReferralMilestone,
+  description: string,
+) {
+  const referral = await supabaseAdmin
+    .from("referrals")
+    .select("id")
+    .eq("referred_id", referredUserId)
+    .maybeSingle();
+  if (!referral.data) return;
+  await creditReferralMilestone(referral.data.id, milestone, description);
 }
 
 async function creditWallet(
