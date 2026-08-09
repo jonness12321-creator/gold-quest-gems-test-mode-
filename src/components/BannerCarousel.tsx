@@ -32,7 +32,7 @@ export function BannerCarousel({
   if (count === 0) return null;
 
   return (
-    <section aria-roledescription="carousel" className="overflow-hidden rounded-3xl shadow-lift">
+    <section aria-roledescription="carousel" className="relative overflow-hidden rounded-3xl shadow-lift">
       <div
         className="flex transition-transform duration-500 ease-out"
         style={{ transform: `translateX(-${index * 100}%)` }}
@@ -76,7 +76,7 @@ export function BannerCarousel({
       </div>
 
       {count > 1 ? (
-        <div className="-mt-4 flex items-center justify-center gap-1.5 pb-3">
+        <div className="absolute inset-x-0 bottom-3 flex items-center justify-center gap-1.5">
           {banners.map((b, i) => (
             <button
               key={b.id}
