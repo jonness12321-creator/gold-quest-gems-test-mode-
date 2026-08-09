@@ -31,9 +31,24 @@ export const Route = createFileRoute("/_authenticated/refer")({
 });
 
 const MILESTONES = [
-  { key: "signup_credited_at", emoji: "🎉", label: "Friend signs up" },
-  { key: "earning_credited_at", emoji: "🎯", label: "Friend's first Task, Offer or Quest" },
-  { key: "withdrawal_credited_at", emoji: "💸", label: "Friend's first withdrawal" },
+  {
+    key: "signup_credited_at",
+    emoji: "🎉",
+    label: "Friend signs up",
+    detail: "Credited when they successfully sign up with your code",
+  },
+  {
+    key: "earning_credited_at",
+    emoji: "🎯",
+    label: "Friend completes their first Task, Offer or Quest",
+    detail: "Any qualifying first earning from a Task, Offer or Quest counts",
+  },
+  {
+    key: "withdrawal_credited_at",
+    emoji: "💸",
+    label: "Friend completes their first withdrawal",
+    detail: "Earned when they successfully complete their first withdrawal",
+  },
 ] as const;
 
 function ReferPage() {
