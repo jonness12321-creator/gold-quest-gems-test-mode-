@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Copy, Share2, Users } from "lucide-react";
+import { Copy, Gift, Share2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -69,18 +69,29 @@ function ReferPage() {
   });
 
   const mine = referrals.data?.filter((r) => r.referrer_id === session?.user.id) ?? [];
+  const referralEarnings = mine.reduce((sum, r) => sum + Number(r.bonus_amount ?? 0), 0);
 
   return (
     <AppShell subtitle="Refer">
+      <header className="mb-4">
+        <h1 className="text-2xl">Refer &amp; Earn</h1>
+        <p className="text-sm text-muted-foreground">Invite friends, get rewarded together</p>
+      </header>
+
       <section className="rounded-3xl bg-jade-gradient p-5 text-primary-foreground shadow-lift">
-        <h1 className="text-2xl">Invite friends, earn more</h1>
+        <h2 className="text-xl">Invite friends, earn more</h2>
         <p className="mt-1 text-sm opacity-80">
           Earn up to {formatMoney(REFERRAL_MAX_BONUS)} per friend.
         </p>
-        <p className="text-amount mt-4 rounded-2xl bg-primary-foreground/10 px-4 py-3 text-center text-2xl tracking-widest">
+
+        <p className="mt-5 text-[11px] font-semibold uppercase tracking-widest opacity-70">
+          Your code
+        </p>
+        <p className="text-amount mt-1.5 rounded-2xl border border-dashed border-primary-foreground/40 bg-primary-foreground/10 px-4 py-3 text-center text-2xl tracking-[0.3em]">
           {code || "—"}
         </p>
-        <div className="mt-3 flex gap-2">
+
+        <div className="mt-4 flex gap-2">
           <Button
             variant="gold"
             className="flex-1 gap-2"
@@ -89,7 +100,7 @@ function ReferPage() {
               toast.success("Invite link copied");
             }}
           >
-            <Copy className="size-4" /> Copy link
+            <Copy className="size-4" /> Copy Code
           </Button>
           <Button
             variant="mint"
@@ -102,37 +113,65 @@ function ReferPage() {
               }
             }}
           >
-            <Share2 className="size-4" /> Share
+            <Share2 className="size-4" /> Share Invite
           </Button>
         </div>
       </section>
 
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="surface-card p-4">
+          <span className="grid size-9 place-items-center rounded-xl bg-primary/10">
+            <Users className="size-4 text-primary" />
+          </span>
+          <p className="text-amount mt-3 text-2xl leading-none">{mine.length}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Friends Invited</p>
+        </div>
+        <div className="surface-card p-4">
+          <span className="grid size-9 place-items-center rounded-xl bg-gold/20">
+            <Gift className="size-4 text-gold-dark" />
+          </span>
+          <p className="text-amount mt-3 text-2xl leading-none text-gold-dark">
+            {formatMoney(referralEarnings)}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">Referral Earnings</p>
+        </div>
+      </div>
+
       <SectionTitle>How you earn {formatMoney(REFERRAL_MAX_BONUS)}</SectionTitle>
-      <ul className="space-y-2">
+      <ol className="surface-card space-y-1 p-4">
         {MILESTONES.map((milestone, index) => (
-          <li key={milestone.key} className="surface-card flex items-center gap-3 p-3">
-            <span className="text-xl">{milestone.emoji}</span>
-            <div className="flex-1">
-              <p className="font-semibold">
+          <li key={milestone.key} className="relative flex gap-3 pb-4 last:pb-0">
+            {index < MILESTONES.length - 1 && (
+              <span
+                aria-hidden
+                className="absolute left-5 top-11 h-[calc(100%-2.25rem)] w-px bg-border"
+              />
+            )}
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-background-alt text-lg">
+              {milestone.emoji}
+            </span>
+            <div className="flex-1 pt-0.5">
+              <p className="text-sm font-semibold">
                 {index === 0 ? "" : "+"}
                 {formatMoney(REFERRAL_MILESTONE_BONUS)} — {milestone.label}
               </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{milestone.detail}</p>
             </div>
           </li>
         ))}
-      </ul>
+      </ol>
 
       <SectionTitle>Your referrals</SectionTitle>
       {!mine.length ? (
         <EmptyState
           icon={Users}
           title="No referrals yet"
-          description="Share your code — bonuses appear here once friends join."
+          description="Share your code above — every friend who joins shows up here, along with what you've earned from them."
         />
       ) : (
         <ul className="space-y-2">
           {mine.map((referral) => (
-            <li key={referral.id} className="surface-card space-y-2 p-3">
+            <li key={referral.id} className="surface-card space-y-2 p-4">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   Joined {formatDate(referral.created_at)}
@@ -141,7 +180,7 @@ function ReferPage() {
                   {formatMoney(referral.bonus_amount)} / {formatMoney(REFERRAL_MAX_BONUS)}
                 </span>
               </div>
-              <ul className="space-y-1">
+              <ul className="space-y-1.5">
                 {MILESTONES.map((milestone) => {
                   const done = Boolean(referral[milestone.key]);
                   return (
@@ -149,15 +188,17 @@ function ReferPage() {
                       key={milestone.key}
                       className="flex items-center justify-between gap-2 text-xs"
                     >
-                      <span className="flex items-center gap-1.5">
-                        <span>{milestone.emoji}</span>
-                        {milestone.label}
+                      <span className="flex items-center gap-2">
+                        <span className="grid size-7 place-items-center rounded-lg bg-background-alt">
+                          {milestone.emoji}
+                        </span>
+                        <span className="text-muted-foreground">{milestone.label}</span>
                       </span>
                       <span
                         className={
                           done
-                            ? "rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary"
-                            : "rounded-full bg-muted px-2 py-0.5 font-semibold text-muted-foreground"
+                            ? "shrink-0 rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary"
+                            : "shrink-0 rounded-full bg-muted px-2 py-0.5 font-semibold text-muted-foreground"
                         }
                       >
                         {done ? `Completed · ${formatMoney(REFERRAL_MILESTONE_BONUS)}` : "Pending"}
@@ -171,10 +212,10 @@ function ReferPage() {
         </ul>
       )}
 
-      <SectionTitle>Terms & conditions</SectionTitle>
-      <details className="surface-card p-3">
+      <SectionTitle>Terms &amp; conditions</SectionTitle>
+      <details className="surface-card p-4">
         <summary className="cursor-pointer text-sm font-semibold">
-          Referral terms & conditions
+          Referral terms &amp; conditions
         </summary>
         <div className="mt-2 space-y-2 text-xs text-muted-foreground">
           <p>
