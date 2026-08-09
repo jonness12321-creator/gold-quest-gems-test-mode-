@@ -31,6 +31,9 @@ export function AppHeader({ subtitle }: { subtitle?: string }) {
     },
   });
 
+  const firstName = (profile?.name ?? "").trim().split(/\s+/)[0] || "there";
+  void subtitle;
+
   const available = Number(profile?.wallet_balance ?? 0) - Number(profile?.held_balance ?? 0);
 
   return (
