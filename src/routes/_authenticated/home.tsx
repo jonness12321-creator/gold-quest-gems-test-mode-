@@ -33,16 +33,29 @@ function HomePage() {
 
   return (
     <AppShell subtitle="Earn as you go">
-      <section className="rounded-3xl bg-jade-gradient p-5 text-primary-foreground shadow-lift">
-        <p className="text-sm opacity-80">Welcome back{profile?.name ? `, ${profile.name}` : ""}</p>
-        <h1 className="mt-1 text-2xl">Let's earn today</h1>
-        <div className="mt-4 flex items-center gap-2 text-sm">
-          <Flame className="size-4 text-gold" />
-          <span className="font-semibold">{streak} day streak</span>
-          <span className="opacity-70">· {Math.max(0, goal - streak)} to bonus</span>
-        </div>
-        <Progress value={(Math.min(streak, goal) / goal) * 100} className="mt-2 h-2 bg-primary-foreground/20" />
-      </section>
+      <BannerCarousel
+        banners={[
+          {
+            id: "earn-today",
+            eyebrow: `Welcome back${profile?.name ? `, ${profile.name}` : ""}`,
+            title: "Let's earn today",
+            content: (
+              <>
+                <div className="mt-4 flex items-center gap-2 text-sm">
+                  <Flame className="size-4 text-gold" />
+                  <span className="font-semibold">{streak} day streak</span>
+                  <span className="opacity-70">· {Math.max(0, goal - streak)} to bonus</span>
+                </div>
+                <Progress
+                  value={(Math.min(streak, goal) / goal) * 100}
+                  className="mt-2 h-2 bg-primary-foreground/20"
+                />
+                <div className="h-4" />
+              </>
+            ),
+          },
+        ]}
+      />
 
       <SectionTitle>Starter Quests</SectionTitle>
       <StarterQuests />
