@@ -38,11 +38,9 @@ export function AppHeader({ subtitle }: { subtitle?: string }) {
       <div className="mx-auto flex w-full max-w-lg items-center justify-between gap-3 px-4 py-3">
         <Link to="/profile" aria-label="Open profile and settings" className="flex items-center gap-2">
           <BrandMark />
-          <span className="hidden sm:block">
-            <span className="block font-display text-lg leading-tight">CoinQuest</span>
-            {subtitle ? (
-              <span className="block text-xs text-muted-foreground">{subtitle}</span>
-            ) : null}
+          <span className="block leading-tight">
+            <span className="block text-xs text-muted-foreground">Hello</span>
+            <span className="block font-display text-lg leading-tight">{firstName}</span>
           </span>
         </Link>
 
