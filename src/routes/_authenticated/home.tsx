@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Flame, Sparkles } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { BannerCarousel } from "@/components/BannerCarousel";
 import { FeaturedOffers } from "@/components/FeaturedOffers";
 import { OfferwallSlot } from "@/components/OfferwallSlot";
 import { StarterQuests } from "@/components/StarterQuests";
