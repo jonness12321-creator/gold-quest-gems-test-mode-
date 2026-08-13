@@ -114,6 +114,42 @@ function AdminPage() {
     onError,
   });
 
+  const providers = useQuery({
+    queryKey: ["offer-providers"],
+    enabled: isAdmin,
+    queryFn: () => fetchProviders({}),
+  });
+
+  const connectAdblue = useMutation({
+    mutationFn: () =>
+      saveProvider({
+        data: {
+          name: "AdBlueMedia",
+          slug: "adbluemedia",
+          providerType: "cpa" as const,
+          enabled: true,
+          syncConfig: { user_id: "788820" },
+          defaultRevenueShare: 0.6,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("AdBlueMedia connected.");
+      void queryClient.invalidateQueries({ queryKey: ["offer-providers"] });
+    },
+    onError,
+  });
+
+  const syncAction = useMutation({
+    mutationFn: (providerId: string) => runSync({ data: { providerId } }),
+    onSuccess: (result) => {
+      toast.success(
+        `Synced ${result.provider}: ${result.upserted} offers imported, ${result.deactivated} deactivated.`,
+      );
+      refresh();
+    },
+    onError,
+  });
+
   if (!isAdmin) {
     return (
       <AppShell subtitle="Admin">
