@@ -112,6 +112,12 @@ export async function ensureProfileImpl(input: {
     await notify(referrerId, "New referral joined", "A friend signed up with your code.", "referral");
     if (referral.data) {
       await creditReferralMilestone(referral.data.id, "signup", "Referral: friend signed up");
+      const { recordTaskEvent } = await import("./tasks/engine.server");
+      await recordTaskEvent({
+        userId: referrerId,
+        eventType: "referral",
+        eventKey: referral.data.id,
+      });
     }
   }
 
