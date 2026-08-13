@@ -295,6 +295,7 @@ function AdminPage() {
                       <Button
                         size="sm"
                         variant="jade"
+                        disabled={claimAction.isPending}
                         onClick={() => claimAction.mutate({ id: claim.id, status: "approved" })}
                       >
                         Approve
@@ -302,6 +303,7 @@ function AdminPage() {
                       <Button
                         size="sm"
                         variant="outline"
+                        disabled={claimAction.isPending}
                         onClick={() => claimAction.mutate({ id: claim.id, status: "rejected" })}
                       >
                         Reject

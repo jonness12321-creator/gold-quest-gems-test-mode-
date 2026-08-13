@@ -668,7 +668,8 @@ export async function adminUpdateWithdrawalImpl(id: string, status: string, note
 export async function adminUpdateOfferClaimImpl(id: string, status: string, note: string | null) {
   const claim = await supabaseAdmin.from("offer_claims").select("*").eq("id", id).single();
   if (claim.error) throw new Error("Claim not found.");
-  if (claim.data.status !== "pending") throw new Error("This claim was already reviewed.");
+  // Idempotent: a repeat submit (double click / retry) is a no-op, not an error.
+  if (claim.data.status !== "pending") return { ok: true, alreadyReviewed: true };
 
   await supabaseAdmin.from("offer_claims").update({ status, admin_note: note }).eq("id", id);
 
