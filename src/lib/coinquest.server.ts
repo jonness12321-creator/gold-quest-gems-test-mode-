@@ -428,6 +428,15 @@ export async function reportAdImpl(userId: string, sessionId: string) {
 
   await touchStreakImpl(userId);
 
+  {
+    const { recordTaskEvent } = await import("./tasks/engine.server");
+    await recordTaskEvent({
+      userId,
+      eventType: "ad_watch",
+      eventKey: `${sessionId}:${nextCount}`,
+    });
+  }
+
   if (done) {
     const reward = Number(session.data.reward_amount);
     await creditWallet(
