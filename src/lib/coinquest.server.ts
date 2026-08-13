@@ -282,7 +282,7 @@ async function payReferralMilestone(
   await creditReferralMilestone(referral.data.id, milestone, description);
 }
 
-async function creditWallet(
+export async function creditWallet(
   userId: string,
   amount: number,
   source: string,
