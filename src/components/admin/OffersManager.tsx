@@ -104,7 +104,15 @@ export function OffersManager() {
   const onError = (error: Error) => toast.error(error.message);
 
   const controlsAction = useMutation({
-    mutationFn: (input: Parameters<typeof setControls>[0]["data"]) => setControls({ data: input }),
+    mutationFn: (input: {
+      id: string;
+      isActive?: boolean;
+      isFeatured?: boolean;
+      adminPriority?: number;
+      sortOrder?: number;
+      rewardAmount?: number;
+      revenueShare?: number;
+    }) => setControls({ data: input }),
     onSuccess: () => {
       toast.success("Offer updated.");
       refresh();
