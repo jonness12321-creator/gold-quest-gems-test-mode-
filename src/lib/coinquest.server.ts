@@ -459,12 +459,16 @@ export async function reportAdImpl(userId: string, sessionId: string) {
 export async function completeTaskImpl(userId: string, taskId: string) {
   const task = await supabaseAdmin.from("tasks").select("*").eq("id", taskId).single();
   if (task.error || !task.data?.is_active) throw new Error("Task unavailable.");
+  if ((task.data as { task_type?: string }).task_type !== "manual") {
+    throw new Error("This task completes automatically from your activity.");
+  }
 
   const existing = await supabaseAdmin
     .from("user_tasks")
     .select("*")
     .eq("user_id", userId)
     .eq("task_id", taskId)
+    .eq("period_key", "lifetime")
     .maybeSingle();
   if (existing.data?.status === "completed") throw new Error("Task already completed.");
 
@@ -475,10 +479,15 @@ export async function completeTaskImpl(userId: string, taskId: string) {
     {
       user_id: userId,
       task_id: taskId,
+      period_key: "lifetime",
+      target: task.data.steps_total,
       progress,
       status: completed ? "completed" : "active",
+      completed_at: completed ? new Date().toISOString() : null,
+      reward_status: completed ? "paid" : "pending",
+      rewarded_at: completed ? new Date().toISOString() : null,
     },
-    { onConflict: "user_id,task_id" },
+    { onConflict: "user_id,task_id,period_key" },
   );
 
   await touchStreakImpl(userId);
