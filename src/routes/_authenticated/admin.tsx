@@ -19,7 +19,12 @@ import {
   adminUpdateOfferClaim,
   adminUpdateWithdrawal,
 } from "@/lib/coinquest.functions";
-import { LifeBuoy } from "lucide-react";
+import {
+  listOfferProviders,
+  syncOfferProvider,
+  upsertOfferProvider,
+} from "@/lib/offers.functions";
+import { LifeBuoy, Network } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
