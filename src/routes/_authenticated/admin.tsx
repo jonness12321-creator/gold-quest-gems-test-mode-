@@ -49,6 +49,9 @@ function AdminPage() {
   const respondTicket = useServerFn(adminRespondTicket);
   const setFlag = useServerFn(adminSetFlag);
   const adjustWallet = useServerFn(adminAdjustWallet);
+  const fetchProviders = useServerFn(listOfferProviders);
+  const saveProvider = useServerFn(upsertOfferProvider);
+  const runSync = useServerFn(syncOfferProvider);
 
   const [tab, setTab] = useState<TabKey>("withdrawals");
   const [notes, setNotes] = useState<Record<string, string>>({});
