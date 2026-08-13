@@ -213,13 +213,20 @@ export async function updateOfferControlsImpl(input: {
   rewardAmount?: number | undefined;
   revenueShare?: number | undefined;
 }) {
-  const patch: Record<string, unknown> = {};
-  if (input.isActive !== undefined) patch["is_active"] = input.isActive;
-  if (input.isFeatured !== undefined) patch["is_featured"] = input.isFeatured;
-  if (input.adminPriority !== undefined) patch["admin_priority"] = input.adminPriority;
-  if (input.sortOrder !== undefined) patch["sort_order"] = input.sortOrder;
-  if (input.rewardAmount !== undefined) patch["reward_amount"] = input.rewardAmount;
-  if (input.revenueShare !== undefined) patch["revenue_share"] = input.revenueShare;
+  const patch: {
+    is_active?: boolean;
+    is_featured?: boolean;
+    admin_priority?: number;
+    sort_order?: number;
+    reward_amount?: number;
+    revenue_share?: number;
+  } = {};
+  if (input.isActive !== undefined) patch.is_active = input.isActive;
+  if (input.isFeatured !== undefined) patch.is_featured = input.isFeatured;
+  if (input.adminPriority !== undefined) patch.admin_priority = input.adminPriority;
+  if (input.sortOrder !== undefined) patch.sort_order = input.sortOrder;
+  if (input.rewardAmount !== undefined) patch.reward_amount = input.rewardAmount;
+  if (input.revenueShare !== undefined) patch.revenue_share = input.revenueShare;
   if (!Object.keys(patch).length) return { ok: true };
   const { error } = await supabaseAdmin.from("offers").update(patch).eq("id", input.id);
   if (error) throw error;
