@@ -186,6 +186,7 @@ function AdminPage() {
             ["claims", `Offers (${pendingClaims.length})`],
             ["tickets", `Tickets (${openTickets.length})`],
             ["users", "Users"],
+            ["providers", "Networks"],
           ] as [TabKey, string][]
         ).map(([key, label]) => (
           <Button
