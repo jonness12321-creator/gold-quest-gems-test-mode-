@@ -17,10 +17,10 @@ import { tasksQuery, userTasksQuery } from "@/lib/queries";
 export const Route = createFileRoute("/_authenticated/task")({
   head: () => ({
     meta: [
-      { title: "Tasks — CoinQuest" },
-      { name: "description", content: "Step-by-step tasks that pay into your CoinQuest wallet." },
-      { property: "og:title", content: "Tasks — CoinQuest" },
-      { property: "og:description", content: "Step-by-step tasks that pay into your CoinQuest wallet." },
+      { title: "Tasks — CashGPT" },
+      { name: "description", content: "Step-by-step tasks that pay into your CashGPT wallet." },
+      { property: "og:title", content: "Tasks — CashGPT" },
+      { property: "og:description", content: "Step-by-step tasks that pay into your CashGPT wallet." },
     ],
   }),
   component: TaskPage,

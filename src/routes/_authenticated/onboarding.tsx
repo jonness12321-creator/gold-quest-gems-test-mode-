@@ -15,12 +15,12 @@ import { completeOnboarding } from "@/lib/coinquest.functions";
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
     meta: [
-      { title: "Set up your account — CoinQuest" },
-      { name: "description", content: "Add your name and phone to start earning with CoinQuest." },
-      { property: "og:title", content: "Set up your account — CoinQuest" },
+      { title: "Set up your account — CashGPT" },
+      { name: "description", content: "Add your name and phone to start earning with CashGPT." },
+      { property: "og:title", content: "Set up your account — CashGPT" },
       {
         property: "og:description",
-        content: "Add your name and phone to start earning with CoinQuest.",
+        content: "Add your name and phone to start earning with CashGPT.",
       },
     ],
   }),
@@ -60,7 +60,7 @@ function OnboardingPage() {
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-6 px-5 py-10">
       <div className="flex flex-col items-center gap-3 text-center">
         <BrandMark className="size-14" />
-        <h1 className="text-2xl">Welcome to CoinQuest</h1>
+        <h1 className="text-2xl">Welcome to CashGPT</h1>
         <p className="text-sm text-muted-foreground">
           Tell us who you are so we can send your rewards to the right place.
         </p>

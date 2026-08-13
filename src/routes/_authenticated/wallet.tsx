@@ -36,9 +36,9 @@ import { cancelWithdrawal, createWithdrawal } from "@/lib/coinquest.functions";
 export const Route = createFileRoute("/_authenticated/wallet")({
   head: () => ({
     meta: [
-      { title: "Wallet — CoinQuest" },
+      { title: "Wallet — CashGPT" },
       { name: "description", content: "Track your balance, transactions and withdrawals." },
-      { property: "og:title", content: "Wallet — CoinQuest" },
+      { property: "og:title", content: "Wallet — CashGPT" },
       { property: "og:description", content: "Track your balance, transactions and withdrawals." },
     ],
   }),

@@ -29,9 +29,9 @@ import { LifeBuoy, Network } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Admin — CoinQuest" },
+      { title: "Admin — CashGPT" },
       { name: "description", content: "Review withdrawals, offer claims, tickets and users." },
-      { property: "og:title", content: "Admin — CoinQuest" },
+      { property: "og:title", content: "Admin — CashGPT" },
       { property: "og:description", content: "Review withdrawals, offer claims, tickets and users." },
     ],
   }),

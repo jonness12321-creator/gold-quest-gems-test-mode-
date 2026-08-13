@@ -1,6 +1,6 @@
 {
-  "name": "CoinQuest",
-  "short_name": "CoinQuest",
+  "name": "CashGPT",
+  "short_name": "CashGPT",
   "description": "Earn real wallet credit for rewarded ads, offers and daily tasks.",
   "start_url": "/",
   "display": "standalone",

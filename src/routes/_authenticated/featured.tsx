@@ -6,9 +6,9 @@ import { FeaturedOffers } from "@/components/FeaturedOffers";
 export const Route = createFileRoute("/_authenticated/featured")({
   head: () => ({
     meta: [
-      { title: "Featured Offers — CoinQuest" },
+      { title: "Featured Offers — CashGPT" },
       { name: "description", content: "Browse every featured partner offer and claim your rewards." },
-      { property: "og:title", content: "Featured Offers — CoinQuest" },
+      { property: "og:title", content: "Featured Offers — CashGPT" },
       {
         property: "og:description",
         content: "Browse every featured partner offer and claim your rewards.",
