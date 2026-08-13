@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/auth";
 import { formatMoney } from "@/lib/coinquest";
 import { completeTask } from "@/lib/coinquest.functions";
 import { tasksQuery, userTasksQuery } from "@/lib/queries";
+import { refreshMyTasks } from "@/lib/tasks.functions";
 
 export const Route = createFileRoute("/_authenticated/task")({
   head: () => ({
@@ -32,6 +33,18 @@ function TaskPage() {
   const tasks = useQuery(tasksQuery());
   const userTasks = useQuery(userTasksQuery(session?.user.id));
   const complete = useServerFn(completeTask);
+  const refresh = useServerFn(refreshMyTasks);
+
+  useQuery({
+    queryKey: ["task-sync", session?.user.id],
+    enabled: Boolean(session?.user.id),
+    staleTime: 30_000,
+    queryFn: async () => {
+      const result = await refresh({});
+      await queryClient.invalidateQueries({ queryKey: ["user-tasks"] });
+      return result;
+    },
+  });
 
   const advance = useMutation({
     mutationFn: (taskId: string) => complete({ data: { taskId } }),
@@ -67,6 +80,10 @@ function TaskPage() {
             const mine = userTasks.data?.find((t) => t.task_id === task.id);
             const progress = mine?.progress ?? 0;
             const done = mine?.status === "completed";
+            const automated = (task as { task_type?: string }).task_type !== "manual";
+            const target = automated
+              ? ((task as { target?: number }).target ?? 1)
+              : task.steps_total;
             const locked = index > 0 && !done && (userTasks.data ?? []).length === 0 && index > 2;
             return (
               <li key={task.id} className="surface-card p-4">
@@ -82,11 +99,11 @@ function TaskPage() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">{task.description}</p>
-                    {task.steps_total > 1 && (
+                    {(automated || task.steps_total > 1) && (
                       <div className="mt-2">
-                        <Progress value={(progress / task.steps_total) * 100} className="h-2" />
+                        <Progress value={Math.min(100, (progress / target) * 100)} className="h-2" />
                         <p className="mt-1 text-[11px] text-muted-foreground">
-                          {progress} of {task.steps_total} steps
+                          {progress} of {target} {automated ? "completed" : "steps"}
                         </p>
                       </div>
                     )}
@@ -94,6 +111,10 @@ function TaskPage() {
                       {done ? (
                         <span className="inline-flex items-center gap-1 text-xs font-semibold text-mint-foreground">
                           <CheckCircle2 className="size-4 text-accent" /> Completed
+                        </span>
+                      ) : automated ? (
+                        <span className="text-xs text-muted-foreground">
+                          Tracks automatically — reward pays out at {target}.
                         </span>
                       ) : locked ? (
                         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
