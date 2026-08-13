@@ -20,6 +20,7 @@ import {
   adminUpdateWithdrawal,
 } from "@/lib/coinquest.functions";
 import { OffersManager } from "@/components/admin/OffersManager";
+import { TasksManager } from "@/components/admin/TasksManager";
 import {
   adminDashboard,
   listOfferProviders,
@@ -43,6 +44,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 type TabKey =
   | "dashboard"
   | "offers"
+  | "tasks"
   | "withdrawals"
   | "claims"
   | "tickets"
@@ -200,6 +202,7 @@ function AdminPage() {
           [
             ["dashboard", "Dashboard"],
             ["offers", "Offers"],
+            ["tasks", "Tasks"],
             ["withdrawals", `Payouts (${pendingWithdrawals.length})`],
             ["claims", `Claims (${pendingClaims.length})`],
             ["tickets", `Tickets (${openTickets.length})`],
@@ -292,7 +295,9 @@ function AdminPage() {
         </>
       )}
 
-      {data.isLoading && tab !== "dashboard" && tab !== "offers" && (
+      {tab === "tasks" && <TasksManager />}
+
+      {data.isLoading && tab !== "dashboard" && tab !== "offers" && tab !== "tasks" && (
         <p className="mt-6 text-sm text-muted-foreground">Loading…</p>
       )}
 

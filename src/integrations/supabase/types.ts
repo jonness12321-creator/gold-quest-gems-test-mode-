@@ -462,42 +462,99 @@ export type Database = {
         }
         Relationships: []
       }
+      task_events: {
+        Row: {
+          created_at: string
+          event_key: string
+          event_type: string
+          id: string
+          metadata: Json
+          occurred_at: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_key: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_key?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           created_at: string
           description: string
+          ends_at: string | null
+          frequency: string
+          icon: string
           id: string
+          image_url: string | null
           is_active: boolean
           is_featured: boolean
           reward: number
           sort_order: number
+          starts_at: string | null
           steps_total: number
+          target: number
+          task_type: string
           title: string
           updated_at: string
+          window_days: number | null
         }
         Insert: {
           created_at?: string
           description?: string
+          ends_at?: string | null
+          frequency?: string
+          icon?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
           reward?: number
           sort_order?: number
+          starts_at?: string | null
           steps_total?: number
+          target?: number
+          task_type?: string
           title: string
           updated_at?: string
+          window_days?: number | null
         }
         Update: {
           created_at?: string
           description?: string
+          ends_at?: string | null
+          frequency?: string
+          icon?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
           reward?: number
           sort_order?: number
+          starts_at?: string | null
           steps_total?: number
+          target?: number
+          task_type?: string
           title?: string
           updated_at?: string
+          window_days?: number | null
         }
         Relationships: []
       }
@@ -524,28 +581,43 @@ export type Database = {
       }
       user_tasks: {
         Row: {
+          completed_at: string | null
           created_at: string
           id: string
+          period_key: string
           progress: number
+          reward_status: string
+          rewarded_at: string | null
           status: string
+          target: number
           task_id: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          completed_at?: string | null
           created_at?: string
           id?: string
+          period_key?: string
           progress?: number
+          reward_status?: string
+          rewarded_at?: string | null
           status?: string
+          target?: number
           task_id: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          completed_at?: string | null
           created_at?: string
           id?: string
+          period_key?: string
           progress?: number
+          reward_status?: string
+          rewarded_at?: string | null
           status?: string
+          target?: number
           task_id?: string
           updated_at?: string
           user_id?: string
