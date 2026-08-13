@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type TabKey = "withdrawals" | "claims" | "tickets" | "users";
+type TabKey = "withdrawals" | "claims" | "tickets" | "users" | "providers";
 
 function AdminPage() {
   const { isAdmin } = useAuth();
