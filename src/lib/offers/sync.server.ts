@@ -117,7 +117,7 @@ export async function listProvidersImpl() {
 }
 
 export async function upsertProviderImpl(input: {
-  id?: string;
+  id?: string | undefined;
   name: string;
   slug: string;
   providerType: string;
