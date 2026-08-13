@@ -691,6 +691,12 @@ export async function adminUpdateOfferClaimImpl(id: string, status: string, note
   if (status === "approved") {
     const reward = Number(claim.data.reward_amount);
     await creditWallet(claim.data.user_id, reward, "offer", "Offer reward");
+    const { recordTaskEvent } = await import("./tasks/engine.server");
+    await recordTaskEvent({
+      userId: claim.data.user_id,
+      eventType: "offer_completion",
+      eventKey: claim.data.id,
+    });
     await notify(
       claim.data.user_id,
       "Offer approved",
