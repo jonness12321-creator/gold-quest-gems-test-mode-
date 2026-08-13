@@ -112,47 +112,136 @@ export type Database = {
           },
         ]
       }
-      offers: {
+      offer_providers: {
         Row: {
           created_at: string
-          description: string
-          icon: string
+          default_revenue_share: number
+          enabled: boolean
           id: string
-          is_active: boolean
-          is_featured: boolean
-          requirements: string
-          reward_amount: number
-          sort_order: number
-          title: string
+          last_synced_at: string | null
+          name: string
+          provider_type: string
+          slug: string
+          sync_config: Json
+          sync_error: string | null
+          sync_status: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          description?: string
-          icon?: string
+          default_revenue_share?: number
+          enabled?: boolean
           id?: string
-          is_active?: boolean
-          is_featured?: boolean
-          requirements?: string
-          reward_amount?: number
-          sort_order?: number
-          title: string
+          last_synced_at?: string | null
+          name: string
+          provider_type?: string
+          slug: string
+          sync_config?: Json
+          sync_error?: string | null
+          sync_status?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          default_revenue_share?: number
+          enabled?: boolean
+          id?: string
+          last_synced_at?: string | null
+          name?: string
+          provider_type?: string
+          slug?: string
+          sync_config?: Json
+          sync_error?: string | null
+          sync_status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      offers: {
+        Row: {
+          admin_priority: number
+          click_url: string | null
+          countries: string[]
+          created_at: string
+          description: string
+          devices: string[]
+          expires_at: string | null
+          external_offer_id: string | null
+          icon: string
+          id: string
+          is_active: boolean
+          is_featured: boolean
+          last_seen_at: string | null
+          network_payout: number | null
+          provider_id: string | null
+          raw_payload: Json | null
+          requirements: string
+          revenue_share: number | null
+          reward_amount: number
+          sort_order: number
+          source: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_priority?: number
+          click_url?: string | null
+          countries?: string[]
+          created_at?: string
           description?: string
+          devices?: string[]
+          expires_at?: string | null
+          external_offer_id?: string | null
           icon?: string
           id?: string
           is_active?: boolean
           is_featured?: boolean
+          last_seen_at?: string | null
+          network_payout?: number | null
+          provider_id?: string | null
+          raw_payload?: Json | null
           requirements?: string
+          revenue_share?: number | null
           reward_amount?: number
           sort_order?: number
+          source?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_priority?: number
+          click_url?: string | null
+          countries?: string[]
+          created_at?: string
+          description?: string
+          devices?: string[]
+          expires_at?: string | null
+          external_offer_id?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          last_seen_at?: string | null
+          network_payout?: number | null
+          provider_id?: string | null
+          raw_payload?: Json | null
+          requirements?: string
+          revenue_share?: number | null
+          reward_amount?: number
+          sort_order?: number
+          source?: string
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "offers_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "offer_providers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payout_methods: {
         Row: {
