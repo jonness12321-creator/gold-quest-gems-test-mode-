@@ -8,9 +8,9 @@ import { SectionTitle } from "@/components/States";
 export const Route = createFileRoute("/_authenticated/offers")({
   head: () => ({
     meta: [
-      { title: "Offers — CoinQuest" },
+      { title: "Offers — CashGPT" },
       { name: "description", content: "Featured partner offers and offerwall networks." },
-      { property: "og:title", content: "Offers — CoinQuest" },
+      { property: "og:title", content: "Offers — CashGPT" },
       { property: "og:description", content: "Featured partner offers and offerwall networks." },
     ],
   }),

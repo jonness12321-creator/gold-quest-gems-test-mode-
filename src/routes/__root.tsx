@@ -78,13 +78,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#FFF8EC" },
-      { title: "CoinQuest — Earn real rewards for ads & offers" },
+      { title: "CashGPT — Earn real rewards for ads & offers" },
       {
         name: "description",
         content:
-          "CoinQuest turns rewarded videos, partner offers and daily tasks into real wallet credit you can cash out.",
+          "CashGPT turns rewarded videos, partner offers and daily tasks into real wallet credit you can cash out.",
       },
-      { property: "og:site_name", content: "CoinQuest" },
+      { property: "og:site_name", content: "CashGPT" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

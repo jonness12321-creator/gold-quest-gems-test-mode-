@@ -12,9 +12,9 @@ import { formatDateTime } from "@/lib/coinquest";
 export const Route = createFileRoute("/_authenticated/notifications")({
   head: () => ({
     meta: [
-      { title: "Notifications — CoinQuest" },
+      { title: "Notifications — CashGPT" },
       { name: "description", content: "Payout, quest and account updates." },
-      { property: "og:title", content: "Notifications — CoinQuest" },
+      { property: "og:title", content: "Notifications — CashGPT" },
       { property: "og:description", content: "Payout, quest and account updates." },
     ],
   }),

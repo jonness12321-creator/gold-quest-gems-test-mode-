@@ -6,12 +6,12 @@ import { OfferwallSlot } from "@/components/OfferwallSlot";
 export const Route = createFileRoute("/_authenticated/offerwall")({
   head: () => ({
     meta: [
-      { title: "Offerwall — CoinQuest" },
-      { name: "description", content: "All partner offerwall networks available in CoinQuest." },
-      { property: "og:title", content: "Offerwall — CoinQuest" },
+      { title: "Offerwall — CashGPT" },
+      { name: "description", content: "All partner offerwall networks available in CashGPT." },
+      { property: "og:title", content: "Offerwall — CashGPT" },
       {
         property: "og:description",
-        content: "All partner offerwall networks available in CoinQuest.",
+        content: "All partner offerwall networks available in CashGPT.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -22,10 +22,10 @@ import { formatDateTime } from "@/lib/coinquest";
 export const Route = createFileRoute("/_authenticated/support")({
   head: () => ({
     meta: [
-      { title: "Support — CoinQuest" },
-      { name: "description", content: "FAQs and support tickets for your CoinQuest account." },
-      { property: "og:title", content: "Support — CoinQuest" },
-      { property: "og:description", content: "FAQs and support tickets for your CoinQuest account." },
+      { title: "Support — CashGPT" },
+      { name: "description", content: "FAQs and support tickets for your CashGPT account." },
+      { property: "og:title", content: "Support — CashGPT" },
+      { property: "og:description", content: "FAQs and support tickets for your CashGPT account." },
     ],
   }),
   component: SupportPage,

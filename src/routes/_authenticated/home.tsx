@@ -8,15 +8,16 @@ import { FeaturedOffers } from "@/components/FeaturedOffers";
 import { OfferwallSlot } from "@/components/OfferwallSlot";
 import { StarterQuests } from "@/components/StarterQuests";
 import { SectionTitle } from "@/components/States";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({
     meta: [
-      { title: "Home — CoinQuest" },
+      { title: "Home — CashGPT" },
       { name: "description", content: "Your daily quests, featured offers and streak bonus." },
-      { property: "og:title", content: "Home — CoinQuest" },
+      { property: "og:title", content: "Home — CashGPT" },
       { property: "og:description", content: "Your daily quests, featured offers and streak bonus." },
     ],
   }),
@@ -89,6 +90,72 @@ function HomePage() {
       <p className="mt-3 text-center text-xs text-muted-foreground">
         Partner networks activate in the mobile app.
       </p>
+
+      <div className="mt-8 flex items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          About Us
+        </span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+      <p className="mt-3 text-center text-sm text-muted-foreground">
+        A quick look at what CashGPT offers and how you can earn.
+      </p>
+
+      <ul className="mt-4 grid grid-cols-2 gap-3">
+        <li className="surface-card p-4">
+          <span className="grid size-10 place-items-center rounded-xl bg-background-alt text-xl">
+            💰
+          </span>
+          <p className="mt-3 font-semibold">Ways to Earn</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Watch ads, complete quests, and finish partner offers to grow your balance.
+          </p>
+        </li>
+        <li className="surface-card p-4">
+          <span className="grid size-10 place-items-center rounded-xl bg-background-alt text-xl">
+            ⚡
+          </span>
+          <p className="mt-3 font-semibold">Instant Payout Guarantee</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Every completed quest reflects in your wallet once it's verified.
+          </p>
+        </li>
+        <li className="surface-card p-4">
+          <span className="grid size-10 place-items-center rounded-xl bg-background-alt text-xl">
+            🎁
+          </span>
+          <p className="mt-3 font-semibold">More Offers, Better Rewards</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Discover different offer types with competitive payout rates.
+          </p>
+        </li>
+        <li className="surface-card p-4">
+          <span className="grid size-10 place-items-center rounded-xl bg-background-alt text-xl">
+            🆘
+          </span>
+          <p className="mt-3 font-semibold">Need Help?</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Our support team is here to help when you need it.
+          </p>
+          <Button size="sm" variant="jade" className="mt-3" asChild>
+            <Link to="/support">Get Help</Link>
+          </Button>
+        </li>
+      </ul>
+
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <Link to="/legal/terms" className="hover:text-foreground hover:underline">
+          Terms
+        </Link>
+        <Link to="/legal/terms" className="hover:text-foreground hover:underline">
+          Privacy
+        </Link>
+        <Link to="/legal/terms" className="hover:text-foreground hover:underline">
+          Payout Policy
+        </Link>
+      </div>
+      <p className="mt-2 text-center text-xs text-muted-foreground">CashGPT © 2026 • v1.0.0</p>
     </AppShell>
   );
 }

@@ -18,12 +18,12 @@ import {
 export const Route = createFileRoute("/_authenticated/refer")({
   head: () => ({
     meta: [
-      { title: "Refer & earn — CoinQuest" },
-      { name: "description", content: "Invite friends to CoinQuest and earn up to $3 per friend." },
-      { property: "og:title", content: "Refer & earn — CoinQuest" },
+      { title: "Refer & earn — CashGPT" },
+      { name: "description", content: "Invite friends to CashGPT and earn up to $3 per friend." },
+      { property: "og:title", content: "Refer & earn — CashGPT" },
       {
         property: "og:description",
-        content: "Invite friends to CoinQuest and earn up to $3 per friend.",
+        content: "Invite friends to CashGPT and earn up to $3 per friend.",
       },
     ],
   }),
@@ -106,7 +106,7 @@ function ReferPage() {
             variant="mint"
             className="flex-1 gap-2"
             onClick={async () => {
-              if (navigator.share) await navigator.share({ title: "CoinQuest", url: link });
+              if (navigator.share) await navigator.share({ title: "CashGPT", url: link });
               else {
                 await navigator.clipboard.writeText(link);
                 toast.success("Invite link copied");

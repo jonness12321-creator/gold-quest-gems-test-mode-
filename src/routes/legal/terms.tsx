@@ -3,10 +3,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/legal/terms")({
   head: () => ({
     meta: [
-      { title: "Terms & policies — CoinQuest" },
-      { name: "description", content: "CoinQuest terms of service, privacy and payout policy." },
-      { property: "og:title", content: "Terms & policies — CoinQuest" },
-      { property: "og:description", content: "CoinQuest terms of service, privacy and payout policy." },
+      { title: "Terms & policies — CashGPT" },
+      { name: "description", content: "CashGPT terms of service, privacy and payout policy." },
+      { property: "og:title", content: "Terms & policies — CashGPT" },
+      { property: "og:description", content: "CashGPT terms of service, privacy and payout policy." },
     ],
   }),
   component: LegalPage,
@@ -22,7 +22,7 @@ function LegalPage() {
       <section className="mt-6 space-y-3">
         <h2 className="text-lg">Terms of service</h2>
         <p className="text-sm text-muted-foreground">
-          CoinQuest rewards are earned by genuinely completing ads, offers and tasks. Automated
+          CashGPT rewards are earned by genuinely completing ads, offers and tasks. Automated
           traffic, emulators, multiple accounts or tampering with reward callbacks void all balances.
         </p>
         <h2 className="text-lg">Privacy</h2>

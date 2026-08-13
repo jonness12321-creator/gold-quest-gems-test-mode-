@@ -13,10 +13,10 @@ import { useAuth } from "@/lib/auth";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — CoinQuest" },
-      { name: "description", content: "Sign in or create your CoinQuest account to start earning." },
-      { property: "og:title", content: "Sign in — CoinQuest" },
-      { property: "og:description", content: "Sign in or create your CoinQuest account to start earning." },
+      { title: "Sign in — CashGPT" },
+      { name: "description", content: "Sign in or create your CashGPT account to start earning." },
+      { property: "og:title", content: "Sign in — CashGPT" },
+      { property: "og:description", content: "Sign in or create your CashGPT account to start earning." },
     ],
   }),
   component: AuthPage,
@@ -48,7 +48,7 @@ function AuthPage() {
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center gap-3 text-center">
           <BrandMark className="size-14" />
-          <h1 className="text-2xl">Welcome to CoinQuest</h1>
+          <h1 className="text-2xl">Welcome to CashGPT</h1>
           <p className="text-sm text-muted-foreground">
             Watch, complete, cash out — real rewards in your wallet.
           </p>

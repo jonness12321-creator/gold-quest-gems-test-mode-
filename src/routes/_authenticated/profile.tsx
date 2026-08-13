@@ -14,12 +14,12 @@ import { formatMoney } from "@/lib/coinquest";
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
-      { title: "Profile — CoinQuest" },
-      { name: "description", content: "Manage your CoinQuest account, wallet and settings." },
-      { property: "og:title", content: "Profile — CoinQuest" },
+      { title: "Profile — CashGPT" },
+      { name: "description", content: "Manage your CashGPT account, wallet and settings." },
+      { property: "og:title", content: "Profile — CashGPT" },
       {
         property: "og:description",
-        content: "Manage your CoinQuest account, wallet and settings.",
+        content: "Manage your CashGPT account, wallet and settings.",
       },
     ],
   }),
@@ -47,7 +47,7 @@ function ProfilePage() {
           {(profile?.name ?? "C").slice(0, 1).toUpperCase()}
         </span>
         <div className="min-w-0">
-          <p className="truncate text-lg font-semibold">{profile?.name ?? "CoinQuest user"}</p>
+          <p className="truncate text-lg font-semibold">{profile?.name ?? "CashGPT user"}</p>
           <p className="truncate text-xs text-muted-foreground">
             {profile?.email ?? session?.user.email}
           </p>

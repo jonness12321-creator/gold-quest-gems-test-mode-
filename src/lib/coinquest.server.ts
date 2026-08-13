@@ -117,7 +117,7 @@ export async function ensureProfileImpl(input: {
 
   await notify(
     input.userId,
-    "Welcome to CoinQuest",
+    "Welcome to CashGPT",
     "Complete your first starter quest to earn your first $1.00.",
     "welcome",
   );
