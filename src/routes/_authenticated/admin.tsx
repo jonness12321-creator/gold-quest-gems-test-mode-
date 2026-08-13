@@ -422,6 +422,67 @@ function AdminPage() {
           </ul>
         </>
       )}
+
+      {tab === "providers" && (
+        <>
+          <SectionTitle>Offer networks</SectionTitle>
+          {providers.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : !providers.data?.length ? (
+            <EmptyState
+              icon={Network}
+              title="No networks connected"
+              description="Connect AdBlueMedia to import network offers into Featured Offers."
+            />
+          ) : (
+            <ul className="space-y-2">
+              {providers.data.map((provider) => (
+                <li key={provider.id} className="surface-card p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">{provider.name}</p>
+                    <span className="rounded-full bg-background-alt px-2.5 py-1 text-[11px] font-semibold capitalize">
+                      {provider.sync_status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {provider.slug} · {provider.enabled ? "Enabled" : "Disabled"} · revenue share{" "}
+                    {Math.round(provider.default_revenue_share * 100)}% ·{" "}
+                    {provider.last_synced_at
+                      ? `synced ${formatDateTime(provider.last_synced_at)}`
+                      : "never synced"}
+                  </p>
+                  {provider.sync_error && (
+                    <p className="mt-1 text-xs text-destructive">{provider.sync_error}</p>
+                  )}
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="jade"
+                      disabled={syncAction.isPending}
+                      onClick={() => syncAction.mutate(provider.id)}
+                    >
+                      {syncAction.isPending && syncAction.variables === provider.id
+                        ? "Syncing…"
+                        : "Sync now"}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!providers.data?.some((p) => p.slug === "adbluemedia") && (
+            <Button
+              className="mt-3"
+              variant="gold"
+              disabled={connectAdblue.isPending}
+              onClick={() => connectAdblue.mutate()}
+            >
+              {connectAdblue.isPending ? "Connecting…" : "Connect AdBlueMedia"}
+            </Button>
+          )}
+        </>
+      )}
     </AppShell>
   );
 }
