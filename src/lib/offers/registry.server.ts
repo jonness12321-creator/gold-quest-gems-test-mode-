@@ -1,3 +1,4 @@
+import { adblueMediaAdapter } from "./adapters/adbluemedia.server";
 import type { OfferProviderAdapter } from "./provider-types";
 
 /**
