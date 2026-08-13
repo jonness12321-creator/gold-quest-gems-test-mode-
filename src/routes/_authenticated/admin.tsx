@@ -19,7 +19,12 @@ import {
   adminUpdateOfferClaim,
   adminUpdateWithdrawal,
 } from "@/lib/coinquest.functions";
-import { LifeBuoy } from "lucide-react";
+import {
+  listOfferProviders,
+  syncOfferProvider,
+  upsertOfferProvider,
+} from "@/lib/offers.functions";
+import { LifeBuoy, Network } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -33,7 +38,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type TabKey = "withdrawals" | "claims" | "tickets" | "users";
+type TabKey = "withdrawals" | "claims" | "tickets" | "users" | "providers";
 
 function AdminPage() {
   const { isAdmin } = useAuth();
@@ -44,6 +49,9 @@ function AdminPage() {
   const respondTicket = useServerFn(adminRespondTicket);
   const setFlag = useServerFn(adminSetFlag);
   const adjustWallet = useServerFn(adminAdjustWallet);
+  const fetchProviders = useServerFn(listOfferProviders);
+  const saveProvider = useServerFn(upsertOfferProvider);
+  const runSync = useServerFn(syncOfferProvider);
 
   const [tab, setTab] = useState<TabKey>("withdrawals");
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -106,6 +114,42 @@ function AdminPage() {
     onError,
   });
 
+  const providers = useQuery({
+    queryKey: ["offer-providers"],
+    enabled: isAdmin,
+    queryFn: () => fetchProviders({}),
+  });
+
+  const connectAdblue = useMutation({
+    mutationFn: () =>
+      saveProvider({
+        data: {
+          name: "AdBlueMedia",
+          slug: "adbluemedia",
+          providerType: "cpa" as const,
+          enabled: true,
+          syncConfig: { user_id: "788820" },
+          defaultRevenueShare: 0.6,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("AdBlueMedia connected.");
+      void queryClient.invalidateQueries({ queryKey: ["offer-providers"] });
+    },
+    onError,
+  });
+
+  const syncAction = useMutation({
+    mutationFn: (providerId: string) => runSync({ data: { providerId } }),
+    onSuccess: (result) => {
+      toast.success(
+        `Synced ${result.provider}: ${result.upserted} offers imported, ${result.deactivated} deactivated.`,
+      );
+      refresh();
+    },
+    onError,
+  });
+
   if (!isAdmin) {
     return (
       <AppShell subtitle="Admin">
@@ -142,6 +186,7 @@ function AdminPage() {
             ["claims", `Offers (${pendingClaims.length})`],
             ["tickets", `Tickets (${openTickets.length})`],
             ["users", "Users"],
+            ["providers", "Networks"],
           ] as [TabKey, string][]
         ).map(([key, label]) => (
           <Button
@@ -375,6 +420,67 @@ function AdminPage() {
               </li>
             ))}
           </ul>
+        </>
+      )}
+
+      {tab === "providers" && (
+        <>
+          <SectionTitle>Offer networks</SectionTitle>
+          {providers.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : !providers.data?.length ? (
+            <EmptyState
+              icon={Network}
+              title="No networks connected"
+              description="Connect AdBlueMedia to import network offers into Featured Offers."
+            />
+          ) : (
+            <ul className="space-y-2">
+              {providers.data.map((provider) => (
+                <li key={provider.id} className="surface-card p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">{provider.name}</p>
+                    <span className="rounded-full bg-background-alt px-2.5 py-1 text-[11px] font-semibold capitalize">
+                      {provider.sync_status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {provider.slug} · {provider.enabled ? "Enabled" : "Disabled"} · revenue share{" "}
+                    {Math.round(provider.default_revenue_share * 100)}% ·{" "}
+                    {provider.last_synced_at
+                      ? `synced ${formatDateTime(provider.last_synced_at)}`
+                      : "never synced"}
+                  </p>
+                  {provider.sync_error && (
+                    <p className="mt-1 text-xs text-destructive">{provider.sync_error}</p>
+                  )}
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="jade"
+                      disabled={syncAction.isPending}
+                      onClick={() => syncAction.mutate(provider.id)}
+                    >
+                      {syncAction.isPending && syncAction.variables === provider.id
+                        ? "Syncing…"
+                        : "Sync now"}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!providers.data?.some((p) => p.slug === "adbluemedia") && (
+            <Button
+              className="mt-3"
+              variant="gold"
+              disabled={connectAdblue.isPending}
+              onClick={() => connectAdblue.mutate()}
+            >
+              {connectAdblue.isPending ? "Connecting…" : "Connect AdBlueMedia"}
+            </Button>
+          )}
         </>
       )}
     </AppShell>

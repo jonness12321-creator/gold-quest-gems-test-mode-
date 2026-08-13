@@ -93,7 +93,12 @@ export function FeaturedOffers({
                 variant="mint"
                 className="mt-auto w-full gap-1 px-2 text-xs"
                 disabled={pending}
-                onClick={() => mutation.mutate(offer.id)}
+                onClick={() => {
+                  if (offer.click_url) {
+                    window.open(offer.click_url, "_blank", "noopener,noreferrer");
+                  }
+                  mutation.mutate(offer.id);
+                }}
               >
                 {pending ? "Sending…" : "Claim"} <ArrowUpRight className="size-3.5" />
               </Button>

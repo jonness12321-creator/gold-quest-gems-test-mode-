@@ -1,3 +1,4 @@
+import { adblueMediaAdapter } from "./adapters/adbluemedia.server";
 import type { OfferProviderAdapter } from "./provider-types";
 
 /**
@@ -18,3 +19,5 @@ export function getAdapter(slug: string): OfferProviderAdapter | null {
 export function listAdapterSlugs(): string[] {
   return [...adapters.keys()];
 }
+
+registerAdapter(adblueMediaAdapter);
