@@ -19,7 +19,9 @@ import {
   adminUpdateOfferClaim,
   adminUpdateWithdrawal,
 } from "@/lib/coinquest.functions";
+import { OffersManager } from "@/components/admin/OffersManager";
 import {
+  adminDashboard,
   listOfferProviders,
   syncOfferProvider,
   upsertOfferProvider,
@@ -38,7 +40,14 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type TabKey = "withdrawals" | "claims" | "tickets" | "users" | "providers";
+type TabKey =
+  | "dashboard"
+  | "offers"
+  | "withdrawals"
+  | "claims"
+  | "tickets"
+  | "users"
+  | "providers";
 
 function AdminPage() {
   const { isAdmin } = useAuth();
@@ -50,10 +59,11 @@ function AdminPage() {
   const setFlag = useServerFn(adminSetFlag);
   const adjustWallet = useServerFn(adminAdjustWallet);
   const fetchProviders = useServerFn(listOfferProviders);
+  const fetchDashboard = useServerFn(adminDashboard);
   const saveProvider = useServerFn(upsertOfferProvider);
   const runSync = useServerFn(syncOfferProvider);
 
-  const [tab, setTab] = useState<TabKey>("withdrawals");
+  const [tab, setTab] = useState<TabKey>("dashboard");
   const [notes, setNotes] = useState<Record<string, string>>({});
 
   const data = useQuery({
@@ -112,6 +122,12 @@ function AdminPage() {
       refresh();
     },
     onError,
+  });
+
+  const dashboard = useQuery({
+    queryKey: ["admin-dashboard"],
+    enabled: isAdmin,
+    queryFn: () => fetchDashboard({}),
   });
 
   const providers = useQuery({
@@ -182,8 +198,10 @@ function AdminPage() {
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
         {(
           [
+            ["dashboard", "Dashboard"],
+            ["offers", "Offers"],
             ["withdrawals", `Payouts (${pendingWithdrawals.length})`],
-            ["claims", `Offers (${pendingClaims.length})`],
+            ["claims", `Claims (${pendingClaims.length})`],
             ["tickets", `Tickets (${openTickets.length})`],
             ["users", "Users"],
             ["providers", "Networks"],
@@ -200,7 +218,83 @@ function AdminPage() {
         ))}
       </div>
 
-      {data.isLoading && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>}
+      {tab === "dashboard" && (
+        <>
+          <SectionTitle>Overview</SectionTitle>
+          {dashboard.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : dashboard.data ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Stat label="Total users" value={String(dashboard.data.users.total)} />
+                <Stat label="Active (30d)" value={String(dashboard.data.users.active)} />
+                <Stat label="Total earned" value={formatMoney(dashboard.data.money.lifetimeEarned)} />
+                <Stat
+                  label="Total withdrawn"
+                  value={formatMoney(dashboard.data.money.lifetimeWithdrawn)}
+                />
+                <Stat
+                  label="Pending payouts"
+                  value={`${dashboard.data.money.pendingWithdrawalCount} · ${formatMoney(
+                    dashboard.data.money.pendingWithdrawalAmount,
+                  )}`}
+                />
+                <Stat
+                  label="Wallet liability"
+                  value={formatMoney(dashboard.data.money.walletLiability)}
+                />
+                <Stat
+                  label="Offer completions"
+                  value={String(dashboard.data.offers.completions)}
+                />
+                <Stat
+                  label="Network revenue"
+                  value={formatMoney(dashboard.data.money.networkRevenue)}
+                />
+              </div>
+              <div className="surface-card p-3 text-sm">
+                <p className="font-semibold">Offers</p>
+                <p className="text-xs text-muted-foreground">
+                  {dashboard.data.offers.total} total · {dashboard.data.offers.manual} manual ·{" "}
+                  {dashboard.data.offers.network} network · {dashboard.data.offers.active} active
+                </p>
+              </div>
+              <div className="surface-card p-3 text-sm">
+                <p className="font-semibold">Referrals</p>
+                <p className="text-xs text-muted-foreground">
+                  {dashboard.data.referrals.total} total · {dashboard.data.referrals.credited}{" "}
+                  credited · {formatMoney(dashboard.data.referrals.paid)} paid
+                </p>
+              </div>
+              {dashboard.data.providers.length > 0 && (
+                <div className="surface-card p-3 text-sm">
+                  <p className="font-semibold">Networks</p>
+                  {dashboard.data.providers.map((provider) => (
+                    <p key={provider.id} className="text-xs text-muted-foreground">
+                      {provider.name} · {provider.enabled ? "enabled" : "disabled"} ·{" "}
+                      {provider.syncStatus} ·{" "}
+                      {provider.lastSyncedAt
+                        ? `synced ${formatDateTime(provider.lastSyncedAt)}`
+                        : "never synced"}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+        </>
+      )}
+
+      {tab === "offers" && (
+        <>
+          <SectionTitle>Offer management</SectionTitle>
+          <OffersManager />
+        </>
+      )}
+
+      {data.isLoading && tab !== "dashboard" && tab !== "offers" && (
+        <p className="mt-6 text-sm text-muted-foreground">Loading…</p>
+      )}
 
       {tab === "withdrawals" && (
         <>
