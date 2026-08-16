@@ -16,11 +16,13 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install project dependencies
-        run: npm install --legacy-peer-deps
+      - name: Install Capacitor only
+        run: npm install @capacitor/core @capacitor/cli @capacitor/android --no-save
 
-      - name: Install Capacitor
-        run: npm install @capacitor/core @capacitor/cli @capacitor/android
+      - name: Create placeholder web assets
+        run: |
+          mkdir -p dist
+          echo "<!DOCTYPE html><html><head><title>CoinQuest</title></head><body>Loading...</body></html>" > dist/index.html
 
       - name: Add Android platform (first run only)
         run: |
