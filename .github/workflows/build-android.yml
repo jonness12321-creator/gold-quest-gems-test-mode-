@@ -104,7 +104,7 @@ jobs:
               public void onCreate(Bundle savedInstanceState) {
                   registerPlugin(AppodealPlugin.class);
                   super.onCreate(savedInstanceState);
-Appodeal.setTesting(true);
+           Appodeal.setTesting(true);
                   Appodeal.initialize(
                       this,
                       "3eeaf954f7b9a037e85fdf6fa7e1073417864658f2a64e01",
