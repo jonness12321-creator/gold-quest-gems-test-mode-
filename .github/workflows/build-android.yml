@@ -47,6 +47,161 @@ jobs:
               }
           }
           EOF
+      - name: Add Appodeal Gradle repository
+        run: |
+          sed -i '/allprojects {/,/}/ s|repositories {|repositories {\n        maven { url "https://artifactory.appodeal.com/appodeal" }|' android/build.gradle
+
+      - name: Add Appodeal SDK dependencies
+        run: |
+          cat >> android/app/build.gradle << 'EOF'
+
+          dependencies {
+              implementation "com.appodeal.ads.sdk:core:4.3.0"
+              implementation "com.appodeal.ads.sdk.adapters:admob:25.2.0.0"
+              implementation "com.appodeal.ads.sdk.adapters:iab:1.8.1.0"
+          }
+          EOF
+
+      - name: Create network security config
+        run: |
+          mkdir -p android/app/src/main/res/xml
+          cat > android/app/src/main/res/xml/network_security_config.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+              <base-config cleartextTrafficPermitted="true">
+                  <trust-anchors>
+                      <certificates src="system" />
+                  </trust-anchors>
+              </base-config>
+          </network-security-config>
+          EOF
+
+      - name: Patch AndroidManifest for Appodeal
+        run: |
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          sed -i 's|<application|<application\n        android:networkSecurityConfig="@xml/network_security_config"|' $MANIFEST
+          sed -i 's|</application>|    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-2311902368895930~2235787223"/>\n    </application>|' $MANIFEST
+      - name: Add Appodeal MainActivity and plugin
+        run: |
+          PKG_DIR=android/app/src/main/java/com/rahulrajput/coinquest
+          mkdir -p $PKG_DIR
+
+          cat > $PKG_DIR/MainActivity.java << 'EOF'
+          package com.rahulrajput.coinquest;
+
+          import android.os.Bundle;
+          import com.appodeal.ads.Appodeal;
+          import com.appodeal.ads.initializing.ApdInitializationCallback;
+          import com.appodeal.ads.initializing.ApdInitializationError;
+          import com.getcapacitor.BridgeActivity;
+          import java.util.List;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  registerPlugin(AppodealPlugin.class);
+                  super.onCreate(savedInstanceState);
+
+                  Appodeal.initialize(
+                      this,
+                      "3eeaf954f7b9a037e85fdf6fa7e1073417864658f2a64e01",
+                      Appodeal.REWARDED_VIDEO,
+                      new ApdInitializationCallback() {
+                          @Override
+                          public void onInitializationFinished(List<ApdInitializationError> errors) {
+                          }
+                      }
+                  );
+              }
+          }
+          EOF
+
+          cat > $PKG_DIR/AppodealPlugin.java << 'EOF'
+          package com.rahulrajput.coinquest;
+
+          import com.appodeal.ads.Appodeal;
+          import com.appodeal.ads.RewardedVideoCallbacks;
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          @CapacitorPlugin(name = "Appodeal")
+          public class AppodealPlugin extends Plugin {
+
+              private PluginCall pendingShowCall;
+
+              @Override
+              public void load() {
+                  super.load();
+                  Appodeal.setRewardedVideoCallbacks(new RewardedVideoCallbacks() {
+                      @Override
+                      public void onRewardedVideoLoaded(boolean isPrecache) {}
+
+                      @Override
+                      public void onRewardedVideoFailedToLoad() {}
+
+                      @Override
+                      public void onRewardedVideoShown() {}
+
+                      @Override
+                      public void onRewardedVideoShowFailed() {
+                          resolvePending(false, 0, "");
+                      }
+
+                      @Override
+                      public void onRewardedVideoClicked() {}
+
+                      @Override
+                      public void onRewardedVideoClosed(boolean finished) {
+                          if (!finished) {
+                              resolvePending(false, 0, "");
+                          }
+                      }
+
+                      @Override
+                      public void onRewardedVideoExpired() {
+                          resolvePending(false, 0, "");
+                      }
+
+                      @Override
+                      public void onRewardedVideoFinished(double amount, String currency) {
+                          resolvePending(true, amount, currency);
+                      }
+                  });
+              }
+
+              private void resolvePending(boolean rewarded, double amount, String currency) {
+                  if (pendingShowCall == null) return;
+                  JSObject result = new JSObject();
+                  result.put("rewarded", rewarded);
+                  result.put("amount", amount);
+                  result.put("currency", currency);
+                  pendingShowCall.resolve(result);
+                  pendingShowCall = null;
+              }
+
+              @PluginMethod
+              public void isRewardedVideoLoaded(PluginCall call) {
+                  JSObject result = new JSObject();
+                  result.put("loaded", Appodeal.isLoaded(Appodeal.REWARDED_VIDEO));
+                  call.resolve(result);
+              }
+
+              @PluginMethod
+              public void showRewardedVideo(PluginCall call) {
+                  if (!Appodeal.isLoaded(Appodeal.REWARDED_VIDEO)) {
+                      JSObject result = new JSObject();
+                      result.put("rewarded", false);
+                      call.resolve(result);
+                      return;
+                  }
+                  pendingShowCall = call;
+                  getActivity().runOnUiThread(() -> Appodeal.show(getActivity(), Appodeal.REWARDED_VIDEO));
+              }
+          }
+          EOF
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
