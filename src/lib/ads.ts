@@ -1,9 +1,18 @@
+import { registerPlugin } from "@capacitor/core";
+
+interface AppodealPlugin {
+  isRewardedVideoLoaded(): Promise<{ loaded: boolean }>;
+  showRewardedVideo(): Promise<{ rewarded: boolean; amount?: number; currency?: string }>;
+}
+
+const Appodeal = registerPlugin<AppodealPlugin>("Appodeal");
+
 /**
  * INTEGRATION POINT — rewarded video ads.
  *
- * Real rewarded-video SDKs (AdMob, Unity Ads) require a native wrapper
- * (Capacitor) and cannot run as pure web components. This module is the seam:
- * replace `playRewardedAd` with the native bridge call once the wrapper exists.
+ * Wired to the native Appodeal SDK via a custom Capacitor plugin (see
+ * android/.../AppodealPlugin.java). Falls back to `completed: false` when
+ * running in a plain browser (no native bridge) or when no ad is ready.
  *
  * The wallet is NEVER credited from here — the client only reports that an ad
  * finished; the server verifies session timing and rate limits before crediting.
@@ -11,9 +20,15 @@
 export type AdResult = { completed: boolean; provider: string };
 
 export async function playRewardedAd(): Promise<AdResult> {
-  // Placeholder: simulates a short rewarded video.
-  await new Promise((resolve) => setTimeout(resolve, 5200));
-  return { completed: true, provider: "placeholder" };
+  try {
+    const { loaded } = await Appodeal.isRewardedVideoLoaded();
+    if (!loaded) return { completed: false, provider: "appodeal" };
+    const result = await Appodeal.showRewardedVideo();
+    return { completed: result.rewarded, provider: "appodeal" };
+  } catch {
+    // Not running inside the native app (no bridge available)
+    return { completed: false, provider: "appodeal" };
+  }
 }
 
 /** Stable-ish device fingerprint used for the one-account-per-device rule. */
