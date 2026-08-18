@@ -32,7 +32,10 @@ jobs:
 
       - name: Sync Capacitor
         run: npx cap sync android
-
+      - name: Bump minSdkVersion to 24
+        run: |
+          find android -name "*.gradle" -o -name "*.gradle.kts" | xargs sed -i 's/minSdkVersion[[:space:]]*=\{0,1\}[[:space:]]*23/minSdkVersion = 24/g; s/minSdkVersion[[:space:]]*=\{0,1\}[[:space:]]*"23"/minSdkVersion "24"/g'
+          
       - name: Fix Kotlin stdlib version conflict
         run: |
           cat >> android/build.gradle << 'EOF'
@@ -101,7 +104,7 @@ jobs:
               public void onCreate(Bundle savedInstanceState) {
                   registerPlugin(AppodealPlugin.class);
                   super.onCreate(savedInstanceState);
-
+Appodeal.setTesting(true);
                   Appodeal.initialize(
                       this,
                       "3eeaf954f7b9a037e85fdf6fa7e1073417864658f2a64e01",
