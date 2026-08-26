@@ -97,6 +97,7 @@ jobs:
           import com.appodeal.ads.initializing.ApdInitializationCallback;
           import com.appodeal.ads.initializing.ApdInitializationError;
           import com.getcapacitor.BridgeActivity;
+          import com.google.android.gms.ads.MobileAds;
           import java.util.List;
 
           public class MainActivity extends BridgeActivity {
@@ -112,6 +113,8 @@ jobs:
                       new ApdInitializationCallback() {
                           @Override
                           public void onInitializationFinished(List<ApdInitializationError> errors) {
+                          MobileAds.openAdInspector(MainActivity.this, error -> {
+                              });
                           }
                       }
                   );
