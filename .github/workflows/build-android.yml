@@ -100,23 +100,32 @@ jobs:
           import com.appodeal.ads.initializing.ApdInitializationError;
           import com.getcapacitor.BridgeActivity;
           import com.google.android.gms.ads.MobileAds;
+          import com.google.android.gms.ads.RequestConfiguration;
           import com.google.android.ump.ConsentDebugSettings;
           import com.google.android.ump.ConsentInformation;
           import com.google.android.ump.ConsentRequestParameters;
           import com.google.android.ump.UserMessagingPlatform;
+          import java.util.Arrays;
           import java.util.List;
 
           public class MainActivity extends BridgeActivity {
+          private static final String TEST_DEVICE_HASH = "6A75BE6DB88D847163969B688D072DCF";
               @Override
               public void onCreate(Bundle savedInstanceState) {
                   registerPlugin(AppodealPlugin.class);
                   super.onCreate(savedInstanceState);
+                  MobileAds.setRequestConfiguration(
+                  new RequestConfiguration.Builder()
+                      .setTestDeviceIds(Arrays.asList(TEST_DEVICE_HASH))
+                      .build()
+              );
 
                   // DEBUG ONLY — forces the EEA consent dialog to appear regardless of
                   // real device location, so we don't have to rely on VPN geo-spoofing.
                   // Remove this ConsentDebugSettings block before a real release build.
                   ConsentDebugSettings debugSettings = new ConsentDebugSettings.Builder(this)
                       .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
+                      .addTestDeviceHashedId(TEST_DEVICE_HASH)
                       .build();
 
                   ConsentRequestParameters params = new ConsentRequestParameters.Builder()
