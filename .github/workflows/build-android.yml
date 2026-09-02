@@ -99,67 +99,44 @@ jobs:
           import com.appodeal.ads.initializing.ApdInitializationCallback;
           import com.appodeal.ads.initializing.ApdInitializationError;
           import com.getcapacitor.BridgeActivity;
-          import com.google.android.gms.ads.MobileAds;
-          import com.google.android.gms.ads.RequestConfiguration;
-          import com.google.android.ump.ConsentDebugSettings;
           import com.google.android.ump.ConsentInformation;
           import com.google.android.ump.ConsentRequestParameters;
           import com.google.android.ump.UserMessagingPlatform;
-          import java.util.Arrays;
           import java.util.List;
 
           public class MainActivity extends BridgeActivity {
-          private static final String TEST_DEVICE_HASH = "6A75BE6DB88D847163969B688D072DCF";
+
               @Override
               public void onCreate(Bundle savedInstanceState) {
                   registerPlugin(AppodealPlugin.class);
                   super.onCreate(savedInstanceState);
-                  MobileAds.setRequestConfiguration(
-                  new RequestConfiguration.Builder()
-                      .setTestDeviceIds(Arrays.asList(TEST_DEVICE_HASH))
-                      .build()
-              );
 
-                  // DEBUG ONLY — forces the EEA consent dialog to appear regardless of
-                  // real device location, so we don't have to rely on VPN geo-spoofing.
-                  // Remove this ConsentDebugSettings block before a real release build.
-                  ConsentDebugSettings debugSettings = new ConsentDebugSettings.Builder(this)
-                      .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
-                      .addTestDeviceHashedId(TEST_DEVICE_HASH)
-                      .build();
-
-                  ConsentRequestParameters params = new ConsentRequestParameters.Builder()
-                      .setConsentDebugSettings(debugSettings)
-                      .build();
+                  ConsentRequestParameters params = new ConsentRequestParameters.Builder().build();
 
                   ConsentInformation consentInformation = UserMessagingPlatform.getConsentInformation(this);
                   consentInformation.requestConsentInfoUpdate(
                       this,
                       params,
                       () -> {
-                          Log.d("ConsentDebug", "requestConsentInfoUpdate success, formAvailable=" + consentInformation.isConsentFormAvailable());
                           if (consentInformation.isConsentFormAvailable()) {
                               UserMessagingPlatform.loadAndShowConsentFormIfRequired(this, formError -> {
                                   if (formError != null) {
-                                      Log.e("ConsentDebug", "Form error: " + formError.getMessage());
-                                  } else {
-                                      Log.d("ConsentDebug", "Consent form flow finished");
+                                      Log.e("Consent", "Form error: " + formError.getMessage());
                                   }
-                                  initAppodealAndInspector();
+                                  initAppodeal();
                               });
                           } else {
-                              initAppodealAndInspector();
+                              initAppodeal();
                           }
                       },
                       requestError -> {
-                          Log.e("ConsentDebug", "requestConsentInfoUpdate failed: " + requestError.getMessage());
-                          initAppodealAndInspector();
+                          Log.e("Consent", "requestConsentInfoUpdate failed: " + requestError.getMessage());
+                          initAppodeal();
                       }
                   );
               }
 
-              private void initAppodealAndInspector() {
-                  Appodeal.setTesting(true);
+              private void initAppodeal() {
                   Appodeal.initialize(
                       this,
                       "3eeaf954f7b9a037e85fdf6fa7e1073417864658f2a64e01",
@@ -167,11 +144,7 @@ jobs:
                       new ApdInitializationCallback() {
                           @Override
                           public void onInitializationFinished(List<ApdInitializationError> errors) {
-                              MobileAds.openAdInspector(MainActivity.this, error -> {
-                                  if (error != null) {
-                                      Log.e("AdInspector", "Failed: " + error.getMessage());
-                                  }
-                              });
+                              // Appodeal initialization finished — real ads ready.
                           }
                       }
                   );
